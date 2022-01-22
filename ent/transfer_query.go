@@ -78,7 +78,7 @@ func (tq *TransferQuery) QueryFromAccounts() *AccountQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(transfer.Table, transfer.FieldID, selector),
 			sqlgraph.To(account.Table, account.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, transfer.FromAccountsTable, transfer.FromAccountsColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, transfer.FromAccountsTable, transfer.FromAccountsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -100,7 +100,7 @@ func (tq *TransferQuery) QueryToAccounts() *AccountQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(transfer.Table, transfer.FieldID, selector),
 			sqlgraph.To(account.Table, account.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, transfer.ToAccountsTable, transfer.ToAccountsColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, transfer.ToAccountsTable, transfer.ToAccountsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil

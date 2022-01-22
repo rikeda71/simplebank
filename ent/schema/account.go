@@ -37,8 +37,8 @@ func (Account) Fields() []ent.Field {
 func (Account) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("entries", Entry.Type),
-		edge.To("from_transfers", Transfer.Type).Unique(),
-		edge.To("to_transfers", Transfer.Type).Unique(),
+		edge.To("from_transfers", Transfer.Type),
+		edge.To("to_transfers", Transfer.Type),
 	}
 }
 

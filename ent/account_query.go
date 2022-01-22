@@ -103,7 +103,7 @@ func (aq *AccountQuery) QueryFromTransfers() *TransferQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(account.Table, account.FieldID, selector),
 			sqlgraph.To(transfer.Table, transfer.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, account.FromTransfersTable, account.FromTransfersColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, account.FromTransfersTable, account.FromTransfersColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
 		return fromU, nil
@@ -125,7 +125,7 @@ func (aq *AccountQuery) QueryToTransfers() *TransferQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(account.Table, account.FieldID, selector),
 			sqlgraph.To(transfer.Table, transfer.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, account.ToTransfersTable, account.ToTransfersColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, account.ToTransfersTable, account.ToTransfersColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
 		return fromU, nil
@@ -478,6 +478,7 @@ func (aq *AccountQuery) sqlAll(ctx context.Context) ([]*Account, error) {
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.FromTransfers = []*Transfer{}
 		}
 		query.Where(predicate.Transfer(func(s *sql.Selector) {
 			s.Where(sql.InValues(account.FromTransfersColumn, fks...))
@@ -492,7 +493,7 @@ func (aq *AccountQuery) sqlAll(ctx context.Context) ([]*Account, error) {
 			if !ok {
 				return nil, fmt.Errorf(`unexpected foreign-key "from_account_id" returned %v for node %v`, fk, n.ID)
 			}
-			node.Edges.FromTransfers = n
+			node.Edges.FromTransfers = append(node.Edges.FromTransfers, n)
 		}
 	}
 
@@ -502,6 +503,7 @@ func (aq *AccountQuery) sqlAll(ctx context.Context) ([]*Account, error) {
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.ToTransfers = []*Transfer{}
 		}
 		query.Where(predicate.Transfer(func(s *sql.Selector) {
 			s.Where(sql.InValues(account.ToTransfersColumn, fks...))
@@ -516,7 +518,7 @@ func (aq *AccountQuery) sqlAll(ctx context.Context) ([]*Account, error) {
 			if !ok {
 				return nil, fmt.Errorf(`unexpected foreign-key "to_account_id" returned %v for node %v`, fk, n.ID)
 			}
-			node.Edges.ToTransfers = n
+			node.Edges.ToTransfers = append(node.Edges.ToTransfers, n)
 		}
 	}
 

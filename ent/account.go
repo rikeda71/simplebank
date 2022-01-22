@@ -9,7 +9,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/s14t284/simplebank/ent/account"
-	"github.com/s14t284/simplebank/ent/transfer"
 )
 
 // Account is the model entity for the Account schema.
@@ -35,9 +34,9 @@ type AccountEdges struct {
 	// Entries holds the value of the entries edge.
 	Entries []*Entry `json:"entries,omitempty"`
 	// FromTransfers holds the value of the from_transfers edge.
-	FromTransfers *Transfer `json:"from_transfers,omitempty"`
+	FromTransfers []*Transfer `json:"from_transfers,omitempty"`
 	// ToTransfers holds the value of the to_transfers edge.
-	ToTransfers *Transfer `json:"to_transfers,omitempty"`
+	ToTransfers []*Transfer `json:"to_transfers,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [3]bool
@@ -53,28 +52,18 @@ func (e AccountEdges) EntriesOrErr() ([]*Entry, error) {
 }
 
 // FromTransfersOrErr returns the FromTransfers value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e AccountEdges) FromTransfersOrErr() (*Transfer, error) {
+// was not loaded in eager-loading.
+func (e AccountEdges) FromTransfersOrErr() ([]*Transfer, error) {
 	if e.loadedTypes[1] {
-		if e.FromTransfers == nil {
-			// The edge from_transfers was loaded in eager-loading,
-			// but was not found.
-			return nil, &NotFoundError{label: transfer.Label}
-		}
 		return e.FromTransfers, nil
 	}
 	return nil, &NotLoadedError{edge: "from_transfers"}
 }
 
 // ToTransfersOrErr returns the ToTransfers value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e AccountEdges) ToTransfersOrErr() (*Transfer, error) {
+// was not loaded in eager-loading.
+func (e AccountEdges) ToTransfersOrErr() ([]*Transfer, error) {
 	if e.loadedTypes[2] {
-		if e.ToTransfers == nil {
-			// The edge to_transfers was loaded in eager-loading,
-			// but was not found.
-			return nil, &NotFoundError{label: transfer.Label}
-		}
 		return e.ToTransfers, nil
 	}
 	return nil, &NotLoadedError{edge: "to_transfers"}

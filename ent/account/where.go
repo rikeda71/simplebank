@@ -529,7 +529,7 @@ func HasFromTransfers() predicate.Account {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(FromTransfersTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, FromTransfersTable, FromTransfersColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, FromTransfersTable, FromTransfersColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -541,7 +541,7 @@ func HasFromTransfersWith(preds ...predicate.Transfer) predicate.Account {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(FromTransfersInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, FromTransfersTable, FromTransfersColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, FromTransfersTable, FromTransfersColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
@@ -557,7 +557,7 @@ func HasToTransfers() predicate.Account {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(ToTransfersTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, ToTransfersTable, ToTransfersColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, ToTransfersTable, ToTransfersColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -569,7 +569,7 @@ func HasToTransfersWith(preds ...predicate.Transfer) predicate.Account {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(ToTransfersInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, ToTransfersTable, ToTransfersColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, ToTransfersTable, ToTransfersColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

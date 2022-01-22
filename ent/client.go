@@ -246,7 +246,7 @@ func (c *AccountClient) QueryFromTransfers(a *Account) *TransferQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(account.Table, account.FieldID, id),
 			sqlgraph.To(transfer.Table, transfer.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, account.FromTransfersTable, account.FromTransfersColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, account.FromTransfersTable, account.FromTransfersColumn),
 		)
 		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
 		return fromV, nil
@@ -262,7 +262,7 @@ func (c *AccountClient) QueryToTransfers(a *Account) *TransferQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(account.Table, account.FieldID, id),
 			sqlgraph.To(transfer.Table, transfer.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, account.ToTransfersTable, account.ToTransfersColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, account.ToTransfersTable, account.ToTransfersColumn),
 		)
 		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
 		return fromV, nil
@@ -474,7 +474,7 @@ func (c *TransferClient) QueryFromAccounts(t *Transfer) *AccountQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(transfer.Table, transfer.FieldID, id),
 			sqlgraph.To(account.Table, account.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, transfer.FromAccountsTable, transfer.FromAccountsColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, transfer.FromAccountsTable, transfer.FromAccountsColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil
@@ -490,7 +490,7 @@ func (c *TransferClient) QueryToAccounts(t *Transfer) *AccountQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(transfer.Table, transfer.FieldID, id),
 			sqlgraph.To(account.Table, account.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, transfer.ToAccountsTable, transfer.ToAccountsColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, transfer.ToAccountsTable, transfer.ToAccountsColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil

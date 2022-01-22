@@ -46,9 +46,11 @@ type AccountMutation struct {
 	entries               map[int]struct{}
 	removedentries        map[int]struct{}
 	clearedentries        bool
-	from_transfers        *int
+	from_transfers        map[int]struct{}
+	removedfrom_transfers map[int]struct{}
 	clearedfrom_transfers bool
-	to_transfers          *int
+	to_transfers          map[int]struct{}
+	removedto_transfers   map[int]struct{}
 	clearedto_transfers   bool
 	done                  bool
 	oldValue              func(context.Context) (*Account, error)
@@ -371,9 +373,14 @@ func (m *AccountMutation) ResetEntries() {
 	m.removedentries = nil
 }
 
-// SetFromTransfersID sets the "from_transfers" edge to the Transfer entity by id.
-func (m *AccountMutation) SetFromTransfersID(id int) {
-	m.from_transfers = &id
+// AddFromTransferIDs adds the "from_transfers" edge to the Transfer entity by ids.
+func (m *AccountMutation) AddFromTransferIDs(ids ...int) {
+	if m.from_transfers == nil {
+		m.from_transfers = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.from_transfers[ids[i]] = struct{}{}
+	}
 }
 
 // ClearFromTransfers clears the "from_transfers" edge to the Transfer entity.
@@ -386,20 +393,29 @@ func (m *AccountMutation) FromTransfersCleared() bool {
 	return m.clearedfrom_transfers
 }
 
-// FromTransfersID returns the "from_transfers" edge ID in the mutation.
-func (m *AccountMutation) FromTransfersID() (id int, exists bool) {
-	if m.from_transfers != nil {
-		return *m.from_transfers, true
+// RemoveFromTransferIDs removes the "from_transfers" edge to the Transfer entity by IDs.
+func (m *AccountMutation) RemoveFromTransferIDs(ids ...int) {
+	if m.removedfrom_transfers == nil {
+		m.removedfrom_transfers = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.from_transfers, ids[i])
+		m.removedfrom_transfers[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedFromTransfers returns the removed IDs of the "from_transfers" edge to the Transfer entity.
+func (m *AccountMutation) RemovedFromTransfersIDs() (ids []int) {
+	for id := range m.removedfrom_transfers {
+		ids = append(ids, id)
 	}
 	return
 }
 
 // FromTransfersIDs returns the "from_transfers" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// FromTransfersID instead. It exists only for internal usage by the builders.
 func (m *AccountMutation) FromTransfersIDs() (ids []int) {
-	if id := m.from_transfers; id != nil {
-		ids = append(ids, *id)
+	for id := range m.from_transfers {
+		ids = append(ids, id)
 	}
 	return
 }
@@ -408,11 +424,17 @@ func (m *AccountMutation) FromTransfersIDs() (ids []int) {
 func (m *AccountMutation) ResetFromTransfers() {
 	m.from_transfers = nil
 	m.clearedfrom_transfers = false
+	m.removedfrom_transfers = nil
 }
 
-// SetToTransfersID sets the "to_transfers" edge to the Transfer entity by id.
-func (m *AccountMutation) SetToTransfersID(id int) {
-	m.to_transfers = &id
+// AddToTransferIDs adds the "to_transfers" edge to the Transfer entity by ids.
+func (m *AccountMutation) AddToTransferIDs(ids ...int) {
+	if m.to_transfers == nil {
+		m.to_transfers = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.to_transfers[ids[i]] = struct{}{}
+	}
 }
 
 // ClearToTransfers clears the "to_transfers" edge to the Transfer entity.
@@ -425,20 +447,29 @@ func (m *AccountMutation) ToTransfersCleared() bool {
 	return m.clearedto_transfers
 }
 
-// ToTransfersID returns the "to_transfers" edge ID in the mutation.
-func (m *AccountMutation) ToTransfersID() (id int, exists bool) {
-	if m.to_transfers != nil {
-		return *m.to_transfers, true
+// RemoveToTransferIDs removes the "to_transfers" edge to the Transfer entity by IDs.
+func (m *AccountMutation) RemoveToTransferIDs(ids ...int) {
+	if m.removedto_transfers == nil {
+		m.removedto_transfers = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.to_transfers, ids[i])
+		m.removedto_transfers[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedToTransfers returns the removed IDs of the "to_transfers" edge to the Transfer entity.
+func (m *AccountMutation) RemovedToTransfersIDs() (ids []int) {
+	for id := range m.removedto_transfers {
+		ids = append(ids, id)
 	}
 	return
 }
 
 // ToTransfersIDs returns the "to_transfers" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// ToTransfersID instead. It exists only for internal usage by the builders.
 func (m *AccountMutation) ToTransfersIDs() (ids []int) {
-	if id := m.to_transfers; id != nil {
-		ids = append(ids, *id)
+	for id := range m.to_transfers {
+		ids = append(ids, id)
 	}
 	return
 }
@@ -447,6 +478,7 @@ func (m *AccountMutation) ToTransfersIDs() (ids []int) {
 func (m *AccountMutation) ResetToTransfers() {
 	m.to_transfers = nil
 	m.clearedto_transfers = false
+	m.removedto_transfers = nil
 }
 
 // Where appends a list predicates to the AccountMutation builder.
@@ -657,13 +689,17 @@ func (m *AccountMutation) AddedIDs(name string) []ent.Value {
 		}
 		return ids
 	case account.EdgeFromTransfers:
-		if id := m.from_transfers; id != nil {
-			return []ent.Value{*id}
+		ids := make([]ent.Value, 0, len(m.from_transfers))
+		for id := range m.from_transfers {
+			ids = append(ids, id)
 		}
+		return ids
 	case account.EdgeToTransfers:
-		if id := m.to_transfers; id != nil {
-			return []ent.Value{*id}
+		ids := make([]ent.Value, 0, len(m.to_transfers))
+		for id := range m.to_transfers {
+			ids = append(ids, id)
 		}
+		return ids
 	}
 	return nil
 }
@@ -673,6 +709,12 @@ func (m *AccountMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 3)
 	if m.removedentries != nil {
 		edges = append(edges, account.EdgeEntries)
+	}
+	if m.removedfrom_transfers != nil {
+		edges = append(edges, account.EdgeFromTransfers)
+	}
+	if m.removedto_transfers != nil {
+		edges = append(edges, account.EdgeToTransfers)
 	}
 	return edges
 }
@@ -684,6 +726,18 @@ func (m *AccountMutation) RemovedIDs(name string) []ent.Value {
 	case account.EdgeEntries:
 		ids := make([]ent.Value, 0, len(m.removedentries))
 		for id := range m.removedentries {
+			ids = append(ids, id)
+		}
+		return ids
+	case account.EdgeFromTransfers:
+		ids := make([]ent.Value, 0, len(m.removedfrom_transfers))
+		for id := range m.removedfrom_transfers {
+			ids = append(ids, id)
+		}
+		return ids
+	case account.EdgeToTransfers:
+		ids := make([]ent.Value, 0, len(m.removedto_transfers))
+		for id := range m.removedto_transfers {
 			ids = append(ids, id)
 		}
 		return ids
@@ -724,12 +778,6 @@ func (m *AccountMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *AccountMutation) ClearEdge(name string) error {
 	switch name {
-	case account.EdgeFromTransfers:
-		m.ClearFromTransfers()
-		return nil
-	case account.EdgeToTransfers:
-		m.ClearToTransfers()
-		return nil
 	}
 	return fmt.Errorf("unknown Account unique edge %s", name)
 }

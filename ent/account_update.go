@@ -69,42 +69,34 @@ func (au *AccountUpdate) AddEntries(e ...*Entry) *AccountUpdate {
 	return au.AddEntryIDs(ids...)
 }
 
-// SetFromTransfersID sets the "from_transfers" edge to the Transfer entity by ID.
-func (au *AccountUpdate) SetFromTransfersID(id int) *AccountUpdate {
-	au.mutation.SetFromTransfersID(id)
+// AddFromTransferIDs adds the "from_transfers" edge to the Transfer entity by IDs.
+func (au *AccountUpdate) AddFromTransferIDs(ids ...int) *AccountUpdate {
+	au.mutation.AddFromTransferIDs(ids...)
 	return au
 }
 
-// SetNillableFromTransfersID sets the "from_transfers" edge to the Transfer entity by ID if the given value is not nil.
-func (au *AccountUpdate) SetNillableFromTransfersID(id *int) *AccountUpdate {
-	if id != nil {
-		au = au.SetFromTransfersID(*id)
+// AddFromTransfers adds the "from_transfers" edges to the Transfer entity.
+func (au *AccountUpdate) AddFromTransfers(t ...*Transfer) *AccountUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
 	}
+	return au.AddFromTransferIDs(ids...)
+}
+
+// AddToTransferIDs adds the "to_transfers" edge to the Transfer entity by IDs.
+func (au *AccountUpdate) AddToTransferIDs(ids ...int) *AccountUpdate {
+	au.mutation.AddToTransferIDs(ids...)
 	return au
 }
 
-// SetFromTransfers sets the "from_transfers" edge to the Transfer entity.
-func (au *AccountUpdate) SetFromTransfers(t *Transfer) *AccountUpdate {
-	return au.SetFromTransfersID(t.ID)
-}
-
-// SetToTransfersID sets the "to_transfers" edge to the Transfer entity by ID.
-func (au *AccountUpdate) SetToTransfersID(id int) *AccountUpdate {
-	au.mutation.SetToTransfersID(id)
-	return au
-}
-
-// SetNillableToTransfersID sets the "to_transfers" edge to the Transfer entity by ID if the given value is not nil.
-func (au *AccountUpdate) SetNillableToTransfersID(id *int) *AccountUpdate {
-	if id != nil {
-		au = au.SetToTransfersID(*id)
+// AddToTransfers adds the "to_transfers" edges to the Transfer entity.
+func (au *AccountUpdate) AddToTransfers(t ...*Transfer) *AccountUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
 	}
-	return au
-}
-
-// SetToTransfers sets the "to_transfers" edge to the Transfer entity.
-func (au *AccountUpdate) SetToTransfers(t *Transfer) *AccountUpdate {
-	return au.SetToTransfersID(t.ID)
+	return au.AddToTransferIDs(ids...)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -133,16 +125,46 @@ func (au *AccountUpdate) RemoveEntries(e ...*Entry) *AccountUpdate {
 	return au.RemoveEntryIDs(ids...)
 }
 
-// ClearFromTransfers clears the "from_transfers" edge to the Transfer entity.
+// ClearFromTransfers clears all "from_transfers" edges to the Transfer entity.
 func (au *AccountUpdate) ClearFromTransfers() *AccountUpdate {
 	au.mutation.ClearFromTransfers()
 	return au
 }
 
-// ClearToTransfers clears the "to_transfers" edge to the Transfer entity.
+// RemoveFromTransferIDs removes the "from_transfers" edge to Transfer entities by IDs.
+func (au *AccountUpdate) RemoveFromTransferIDs(ids ...int) *AccountUpdate {
+	au.mutation.RemoveFromTransferIDs(ids...)
+	return au
+}
+
+// RemoveFromTransfers removes "from_transfers" edges to Transfer entities.
+func (au *AccountUpdate) RemoveFromTransfers(t ...*Transfer) *AccountUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return au.RemoveFromTransferIDs(ids...)
+}
+
+// ClearToTransfers clears all "to_transfers" edges to the Transfer entity.
 func (au *AccountUpdate) ClearToTransfers() *AccountUpdate {
 	au.mutation.ClearToTransfers()
 	return au
+}
+
+// RemoveToTransferIDs removes the "to_transfers" edge to Transfer entities by IDs.
+func (au *AccountUpdate) RemoveToTransferIDs(ids ...int) *AccountUpdate {
+	au.mutation.RemoveToTransferIDs(ids...)
+	return au
+}
+
+// RemoveToTransfers removes "to_transfers" edges to Transfer entities.
+func (au *AccountUpdate) RemoveToTransfers(t ...*Transfer) *AccountUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return au.RemoveToTransferIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -317,7 +339,7 @@ func (au *AccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if au.mutation.FromTransfersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   account.FromTransfersTable,
 			Columns: []string{account.FromTransfersColumn},
@@ -331,9 +353,28 @@ func (au *AccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
+	if nodes := au.mutation.RemovedFromTransfersIDs(); len(nodes) > 0 && !au.mutation.FromTransfersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.FromTransfersTable,
+			Columns: []string{account.FromTransfersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: transfer.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
 	if nodes := au.mutation.FromTransfersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   account.FromTransfersTable,
 			Columns: []string{account.FromTransfersColumn},
@@ -352,7 +393,7 @@ func (au *AccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if au.mutation.ToTransfersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   account.ToTransfersTable,
 			Columns: []string{account.ToTransfersColumn},
@@ -366,9 +407,28 @@ func (au *AccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
+	if nodes := au.mutation.RemovedToTransfersIDs(); len(nodes) > 0 && !au.mutation.ToTransfersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.ToTransfersTable,
+			Columns: []string{account.ToTransfersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: transfer.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
 	if nodes := au.mutation.ToTransfersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   account.ToTransfersTable,
 			Columns: []string{account.ToTransfersColumn},
@@ -444,42 +504,34 @@ func (auo *AccountUpdateOne) AddEntries(e ...*Entry) *AccountUpdateOne {
 	return auo.AddEntryIDs(ids...)
 }
 
-// SetFromTransfersID sets the "from_transfers" edge to the Transfer entity by ID.
-func (auo *AccountUpdateOne) SetFromTransfersID(id int) *AccountUpdateOne {
-	auo.mutation.SetFromTransfersID(id)
+// AddFromTransferIDs adds the "from_transfers" edge to the Transfer entity by IDs.
+func (auo *AccountUpdateOne) AddFromTransferIDs(ids ...int) *AccountUpdateOne {
+	auo.mutation.AddFromTransferIDs(ids...)
 	return auo
 }
 
-// SetNillableFromTransfersID sets the "from_transfers" edge to the Transfer entity by ID if the given value is not nil.
-func (auo *AccountUpdateOne) SetNillableFromTransfersID(id *int) *AccountUpdateOne {
-	if id != nil {
-		auo = auo.SetFromTransfersID(*id)
+// AddFromTransfers adds the "from_transfers" edges to the Transfer entity.
+func (auo *AccountUpdateOne) AddFromTransfers(t ...*Transfer) *AccountUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
 	}
+	return auo.AddFromTransferIDs(ids...)
+}
+
+// AddToTransferIDs adds the "to_transfers" edge to the Transfer entity by IDs.
+func (auo *AccountUpdateOne) AddToTransferIDs(ids ...int) *AccountUpdateOne {
+	auo.mutation.AddToTransferIDs(ids...)
 	return auo
 }
 
-// SetFromTransfers sets the "from_transfers" edge to the Transfer entity.
-func (auo *AccountUpdateOne) SetFromTransfers(t *Transfer) *AccountUpdateOne {
-	return auo.SetFromTransfersID(t.ID)
-}
-
-// SetToTransfersID sets the "to_transfers" edge to the Transfer entity by ID.
-func (auo *AccountUpdateOne) SetToTransfersID(id int) *AccountUpdateOne {
-	auo.mutation.SetToTransfersID(id)
-	return auo
-}
-
-// SetNillableToTransfersID sets the "to_transfers" edge to the Transfer entity by ID if the given value is not nil.
-func (auo *AccountUpdateOne) SetNillableToTransfersID(id *int) *AccountUpdateOne {
-	if id != nil {
-		auo = auo.SetToTransfersID(*id)
+// AddToTransfers adds the "to_transfers" edges to the Transfer entity.
+func (auo *AccountUpdateOne) AddToTransfers(t ...*Transfer) *AccountUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
 	}
-	return auo
-}
-
-// SetToTransfers sets the "to_transfers" edge to the Transfer entity.
-func (auo *AccountUpdateOne) SetToTransfers(t *Transfer) *AccountUpdateOne {
-	return auo.SetToTransfersID(t.ID)
+	return auo.AddToTransferIDs(ids...)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -508,16 +560,46 @@ func (auo *AccountUpdateOne) RemoveEntries(e ...*Entry) *AccountUpdateOne {
 	return auo.RemoveEntryIDs(ids...)
 }
 
-// ClearFromTransfers clears the "from_transfers" edge to the Transfer entity.
+// ClearFromTransfers clears all "from_transfers" edges to the Transfer entity.
 func (auo *AccountUpdateOne) ClearFromTransfers() *AccountUpdateOne {
 	auo.mutation.ClearFromTransfers()
 	return auo
 }
 
-// ClearToTransfers clears the "to_transfers" edge to the Transfer entity.
+// RemoveFromTransferIDs removes the "from_transfers" edge to Transfer entities by IDs.
+func (auo *AccountUpdateOne) RemoveFromTransferIDs(ids ...int) *AccountUpdateOne {
+	auo.mutation.RemoveFromTransferIDs(ids...)
+	return auo
+}
+
+// RemoveFromTransfers removes "from_transfers" edges to Transfer entities.
+func (auo *AccountUpdateOne) RemoveFromTransfers(t ...*Transfer) *AccountUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return auo.RemoveFromTransferIDs(ids...)
+}
+
+// ClearToTransfers clears all "to_transfers" edges to the Transfer entity.
 func (auo *AccountUpdateOne) ClearToTransfers() *AccountUpdateOne {
 	auo.mutation.ClearToTransfers()
 	return auo
+}
+
+// RemoveToTransferIDs removes the "to_transfers" edge to Transfer entities by IDs.
+func (auo *AccountUpdateOne) RemoveToTransferIDs(ids ...int) *AccountUpdateOne {
+	auo.mutation.RemoveToTransferIDs(ids...)
+	return auo
+}
+
+// RemoveToTransfers removes "to_transfers" edges to Transfer entities.
+func (auo *AccountUpdateOne) RemoveToTransfers(t ...*Transfer) *AccountUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return auo.RemoveToTransferIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -716,7 +798,7 @@ func (auo *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err e
 	}
 	if auo.mutation.FromTransfersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   account.FromTransfersTable,
 			Columns: []string{account.FromTransfersColumn},
@@ -730,9 +812,28 @@ func (auo *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err e
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
+	if nodes := auo.mutation.RemovedFromTransfersIDs(); len(nodes) > 0 && !auo.mutation.FromTransfersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.FromTransfersTable,
+			Columns: []string{account.FromTransfersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: transfer.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
 	if nodes := auo.mutation.FromTransfersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   account.FromTransfersTable,
 			Columns: []string{account.FromTransfersColumn},
@@ -751,7 +852,7 @@ func (auo *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err e
 	}
 	if auo.mutation.ToTransfersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   account.ToTransfersTable,
 			Columns: []string{account.ToTransfersColumn},
@@ -765,9 +866,28 @@ func (auo *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err e
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
+	if nodes := auo.mutation.RemovedToTransfersIDs(); len(nodes) > 0 && !auo.mutation.ToTransfersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   account.ToTransfersTable,
+			Columns: []string{account.ToTransfersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: transfer.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
 	if nodes := auo.mutation.ToTransfersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   account.ToTransfersTable,
 			Columns: []string{account.ToTransfersColumn},

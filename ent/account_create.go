@@ -69,42 +69,34 @@ func (ac *AccountCreate) AddEntries(e ...*Entry) *AccountCreate {
 	return ac.AddEntryIDs(ids...)
 }
 
-// SetFromTransfersID sets the "from_transfers" edge to the Transfer entity by ID.
-func (ac *AccountCreate) SetFromTransfersID(id int) *AccountCreate {
-	ac.mutation.SetFromTransfersID(id)
+// AddFromTransferIDs adds the "from_transfers" edge to the Transfer entity by IDs.
+func (ac *AccountCreate) AddFromTransferIDs(ids ...int) *AccountCreate {
+	ac.mutation.AddFromTransferIDs(ids...)
 	return ac
 }
 
-// SetNillableFromTransfersID sets the "from_transfers" edge to the Transfer entity by ID if the given value is not nil.
-func (ac *AccountCreate) SetNillableFromTransfersID(id *int) *AccountCreate {
-	if id != nil {
-		ac = ac.SetFromTransfersID(*id)
+// AddFromTransfers adds the "from_transfers" edges to the Transfer entity.
+func (ac *AccountCreate) AddFromTransfers(t ...*Transfer) *AccountCreate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
 	}
+	return ac.AddFromTransferIDs(ids...)
+}
+
+// AddToTransferIDs adds the "to_transfers" edge to the Transfer entity by IDs.
+func (ac *AccountCreate) AddToTransferIDs(ids ...int) *AccountCreate {
+	ac.mutation.AddToTransferIDs(ids...)
 	return ac
 }
 
-// SetFromTransfers sets the "from_transfers" edge to the Transfer entity.
-func (ac *AccountCreate) SetFromTransfers(t *Transfer) *AccountCreate {
-	return ac.SetFromTransfersID(t.ID)
-}
-
-// SetToTransfersID sets the "to_transfers" edge to the Transfer entity by ID.
-func (ac *AccountCreate) SetToTransfersID(id int) *AccountCreate {
-	ac.mutation.SetToTransfersID(id)
-	return ac
-}
-
-// SetNillableToTransfersID sets the "to_transfers" edge to the Transfer entity by ID if the given value is not nil.
-func (ac *AccountCreate) SetNillableToTransfersID(id *int) *AccountCreate {
-	if id != nil {
-		ac = ac.SetToTransfersID(*id)
+// AddToTransfers adds the "to_transfers" edges to the Transfer entity.
+func (ac *AccountCreate) AddToTransfers(t ...*Transfer) *AccountCreate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
 	}
-	return ac
-}
-
-// SetToTransfers sets the "to_transfers" edge to the Transfer entity.
-func (ac *AccountCreate) SetToTransfers(t *Transfer) *AccountCreate {
-	return ac.SetToTransfersID(t.ID)
+	return ac.AddToTransferIDs(ids...)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -283,7 +275,7 @@ func (ac *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 	}
 	if nodes := ac.mutation.FromTransfersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   account.FromTransfersTable,
 			Columns: []string{account.FromTransfersColumn},
@@ -302,7 +294,7 @@ func (ac *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 	}
 	if nodes := ac.mutation.ToTransfersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   account.ToTransfersTable,
 			Columns: []string{account.ToTransfersColumn},

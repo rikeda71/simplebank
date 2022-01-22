@@ -62,8 +62,8 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "amount", Type: field.TypeInt},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "from_account_id", Type: field.TypeInt, Unique: true, Nullable: true},
-		{Name: "to_account_id", Type: field.TypeInt, Unique: true, Nullable: true},
+		{Name: "from_account_id", Type: field.TypeInt, Nullable: true},
+		{Name: "to_account_id", Type: field.TypeInt, Nullable: true},
 	}
 	// TransfersTable holds the schema information for the "transfers" table.
 	TransfersTable = &schema.Table{
