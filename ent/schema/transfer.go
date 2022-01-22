@@ -29,11 +29,15 @@ func (Transfer) Fields() []ent.Field {
 // Edges of the Transfer.
 func (Transfer) Edges() []ent.Edge {
 	return []ent.Edge{
+		// accountスキーマのfrom_accountsを参照
+		// 外部キーとして、from_account_id を公開
 		edge.From("from_accounts", Account.Type).
 			Ref("from_transfers").
 			Field("from_account_id").
 			Unique().
 			Required(),
+		// accountスキーマのfrom_accountsを参照
+		// 外部キーとして、to_account_id を公開
 		edge.From("to_accounts", Account.Type).
 			Ref("to_transfers").
 			Field("to_account_id").

@@ -28,6 +28,8 @@ func (Entry) Fields() []ent.Field {
 // Edges of the Entry.
 func (Entry) Edges() []ent.Edge {
 	return []ent.Edge{
+		// accountスキーマのentriesを参照
+		// 外部キーとして、account_id を公開
 		edge.From("accounts", Account.Type).
 			Ref("entries").
 			Field("account_id").
