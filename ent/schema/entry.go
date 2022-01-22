@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -16,7 +17,8 @@ type Entry struct {
 func (Entry) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("account_id"),
-		// Positive で正数のみなる制約を付与
+
+		// Positive で正数のみになる制約を付与
 		field.Int("amount").Positive(),
 		field.Time("created_at").Default(time.Now),
 	}
@@ -24,5 +26,15 @@ func (Entry) Fields() []ent.Field {
 
 // Edges of the Entry.
 func (Entry) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.From("accounts", Account.Type).
+			Ref("entries").
+			Field("account_id").
+			Unique().
+			Required(),
+	}
+}
+
+func (Entry) Indexes() []ent.Index {
 	return nil
 }
