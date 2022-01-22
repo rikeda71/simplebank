@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 // Account holds the schema definition for the Account entity.
@@ -42,5 +43,7 @@ func (Account) Edges() []ent.Edge {
 }
 
 func (Account) Indexes() []ent.Index {
-	return nil
+	return []ent.Index{
+		index.Fields("owner").Unique(),
+	}
 }

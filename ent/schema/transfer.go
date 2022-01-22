@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 // Transfer holds the schema definition for the Transfer entity.
@@ -42,5 +43,9 @@ func (Transfer) Edges() []ent.Edge {
 }
 
 func (Transfer) Indexes() []ent.Index {
-	return nil
+	return []ent.Index{
+		index.Fields("from_account_id"),
+		index.Fields("to_account_id"),
+		index.Fields("from_account_id", "to_account_id"),
+	}
 }

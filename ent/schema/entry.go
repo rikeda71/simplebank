@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 // Entry holds the schema definition for the Entry entity.
@@ -36,5 +37,7 @@ func (Entry) Edges() []ent.Edge {
 }
 
 func (Entry) Indexes() []ent.Index {
-	return nil
+	return []ent.Index{
+		index.Fields("account_id"),
+	}
 }
