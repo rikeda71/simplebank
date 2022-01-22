@@ -8,5 +8,7 @@ migrateup:
 	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up
 migratedown:
 	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down
+ent:
+	go generate ./ent
 
-.PHONY: createdb, dropdb, postgres
+.PHONY: createdb, dropdb, postgres, ent
