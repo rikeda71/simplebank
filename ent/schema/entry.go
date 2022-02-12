@@ -18,9 +18,7 @@ type Entry struct {
 func (Entry) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("account_id"),
-
-		// Positive で正数のみになる制約を付与
-		field.Int("amount").Positive(),
+		field.Int("amount"),
 		field.Time("created_at").Default(time.Now),
 	}
 }

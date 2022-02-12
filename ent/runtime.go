@@ -27,16 +27,16 @@ func init() {
 	account.DefaultCreatedAt = accountDescCreatedAt.Default.(func() time.Time)
 	entryFields := schema.Entry{}.Fields()
 	_ = entryFields
-	// entryDescAmount is the schema descriptor for amount field.
-	entryDescAmount := entryFields[1].Descriptor()
-	// entry.AmountValidator is a validator for the "amount" field. It is called by the builders before save.
-	entry.AmountValidator = entryDescAmount.Validators[0].(func(int) error)
 	// entryDescCreatedAt is the schema descriptor for created_at field.
 	entryDescCreatedAt := entryFields[2].Descriptor()
 	// entry.DefaultCreatedAt holds the default value on creation for the created_at field.
 	entry.DefaultCreatedAt = entryDescCreatedAt.Default.(func() time.Time)
 	transferFields := schema.Transfer{}.Fields()
 	_ = transferFields
+	// transferDescAmount is the schema descriptor for amount field.
+	transferDescAmount := transferFields[2].Descriptor()
+	// transfer.AmountValidator is a validator for the "amount" field. It is called by the builders before save.
+	transfer.AmountValidator = transferDescAmount.Validators[0].(func(int) error)
 	// transferDescCreatedAt is the schema descriptor for created_at field.
 	transferDescCreatedAt := transferFields[3].Descriptor()
 	// transfer.DefaultCreatedAt holds the default value on creation for the created_at field.
