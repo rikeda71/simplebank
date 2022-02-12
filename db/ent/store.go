@@ -92,63 +92,18 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 			return err
 		}
 
-		// SELECT FOR UPDATE を使って一貫性を保つ
-		// Get だと通常の SELECT になる
-		// account1, err := tx.Account.Get(ctx, arg.FromAccountID)
-		// if err != nil {
-		// 	return err
-		// }
-		// result.ToAccount, err = tx.Account.UpdateOneID(account1.ID).
-		// 	AddBalance(-arg.Ammount).
-		// 	Save(ctx)
-		q1, err := tx.Account.Query().
-			// `FOR UPDATE` を使う場合はシンプルに以下のように記述できる
-			// Where(account.ID(arg.FromAccountID)).
-			// ForUpdate().
-
-			// FOR NO KEY UPDATE はビルダーメソッドが用意されていないので下記のようにして書く
-			Where(func(s *sql.Selector) {
-				s.Where(sql.EQ(account.FieldID, arg.FromAccountID)).
-					For(sql.LockNoKeyUpdate)
-			}).
-			// Unique(false) を呼び出すことで SELECT DISTINCT => SELECT に変更
-			// psql において、FOR NO KEY UPDATE は SELECT DISTINCT と両立できない
-			Unique(false).
-			Only(ctx)
-		if err != nil {
-			return err
-		}
-		result.FromAccount, err = q1.Update().AddBalance(-arg.Ammount).Save(ctx)
+		result.FromAccount, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
+			ID:     arg.FromAccountID,
+			Amount: -arg.Ammount,
+		})
 		if err != nil {
 			return err
 		}
 
-		// SELECT FOR UPDATE を使って一貫性を保つ
-		// account2, err := tx.Account.Get(ctx, arg.ToAccountID)
-		// if err != nil {
-		// 	return err
-		// }
-		// result.ToAccount, err = tx.Account.UpdateOneID(account2.ID).
-		// 	AddBalance(arg.Ammount).
-		// 	Save(ctx)
-		q2, err := tx.Account.Query().
-			// `FOR UPDATE` を使う場合はシンプルに以下のように記述できる
-			// Where(account.ID(arg.ToAccountID)).
-			// ForUpdate().
-
-			// FOR NO KEY UPDATE はビルダーメソッドが用意されていないので下記のようにして書く
-			Where(func(s *sql.Selector) {
-				s.Where(sql.EQ(account.FieldID, arg.ToAccountID)).
-					For(sql.LockNoKeyUpdate)
-			}).
-			// Unique(false) を呼び出すことで SELECT DISTINCT => SELECT に変更
-			// psql において、FOR NO KEY UPDATE は SELECT DISTINCT と両立できない
-			Unique(false).
-			Only(ctx)
-		if err != nil {
-			return err
-		}
-		result.ToAccount, err = q2.Update().AddBalance(arg.Ammount).Save(ctx)
+		result.ToAccount, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
+			ID:     arg.ToAccountID,
+			Amount: arg.Ammount,
+		})
 		if err != nil {
 			return err
 		}
@@ -157,4 +112,40 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 	})
 
 	return result, err
+}
+
+type AddAccountBalanceParams struct {
+	ID     int
+	Amount int
+}
+
+// AddAccountBalance update account balance
+func (store *Store) AddAccountBalance(ctx context.Context, tx *ent.Tx, params AddAccountBalanceParams) (*ent.Account, error) {
+	// SELECT FOR UPDATE を使って一貫性を保つ
+	// Get だと通常の SELECT になる
+	// account1, err := tx.Account.Get(ctx, arg.FromAccountID)
+	// if err != nil {
+	// 	return err
+	// }
+	// result.ToAccount, err = tx.Account.UpdateOneID(account1.ID).
+	// 	AddBalance(-arg.Ammount).
+	// 	Save(ctx)
+	q, err := tx.Account.Query().
+		// `FOR UPDATE` を使う場合はシンプルに以下のように記述できる
+		// Where(account.ID(arg.FromAccountID)).
+		// ForUpdate().
+
+		// FOR NO KEY UPDATE はビルダーメソッドが用意されていないので下記のようにして書く
+		Where(func(s *sql.Selector) {
+			s.Where(sql.EQ(account.FieldID, params.ID)).
+				For(sql.LockNoKeyUpdate)
+		}).
+		// Unique(false) を呼び出すことで SELECT DISTINCT => SELECT に変更
+		// psql において、FOR NO KEY UPDATE は SELECT DISTINCT と両立できない
+		Unique(false).
+		Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return q.Update().AddBalance(params.Amount).Save(ctx)
 }
