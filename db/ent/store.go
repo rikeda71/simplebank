@@ -92,20 +92,40 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 			return err
 		}
 
-		result.FromAccount, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
-			ID:     arg.FromAccountID,
-			Amount: -arg.Ammount,
-		})
-		if err != nil {
-			return err
-		}
+		// 同時に2つ以上のトランザクションが2つとも同一accountIdを指定し、FromとToが入れ替わっていた場合のデッドロック対策
+		// accountId が小さい順に処理することでデッドロックを避けている
+		if arg.FromAccountID < arg.ToAccountID {
+			result.FromAccount, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
+				ID:     arg.FromAccountID,
+				Amount: -arg.Ammount,
+			})
+			if err != nil {
+				return err
+			}
 
-		result.ToAccount, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
-			ID:     arg.ToAccountID,
-			Amount: arg.Ammount,
-		})
-		if err != nil {
-			return err
+			result.ToAccount, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
+				ID:     arg.ToAccountID,
+				Amount: arg.Ammount,
+			})
+			if err != nil {
+				return err
+			}
+		} else {
+			result.ToAccount, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
+				ID:     arg.ToAccountID,
+				Amount: arg.Ammount,
+			})
+			if err != nil {
+				return err
+			}
+
+			result.FromAccount, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
+				ID:     arg.FromAccountID,
+				Amount: -arg.Ammount,
+			})
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
