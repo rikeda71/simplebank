@@ -10,17 +10,17 @@ import (
 )
 
 type Store struct {
-	client *ent.Client
+	DbClient *ent.Client
 }
 
 func NewStore(client *ent.Client) *Store {
 	return &Store{
-		client: client,
+		DbClient: client,
 	}
 }
 
 func (store *Store) execTx(ctx context.Context, fn func(tx *ent.Tx) error) error {
-	tx, err := store.client.Tx(ctx)
+	tx, err := store.DbClient.Tx(ctx)
 	if err != nil {
 		return err
 	}
