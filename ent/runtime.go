@@ -17,10 +17,6 @@ import (
 func init() {
 	accountFields := schema.Account{}.Fields()
 	_ = accountFields
-	// accountDescBalance is the schema descriptor for balance field.
-	accountDescBalance := accountFields[1].Descriptor()
-	// account.BalanceValidator is a validator for the "balance" field. It is called by the builders before save.
-	account.BalanceValidator = accountDescBalance.Validators[0].(func(int) error)
 	// accountDescCreatedAt is the schema descriptor for created_at field.
 	accountDescCreatedAt := accountFields[3].Descriptor()
 	// account.DefaultCreatedAt holds the default value on creation for the created_at field.

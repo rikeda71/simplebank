@@ -184,11 +184,6 @@ func (ac *AccountCreate) check() error {
 	if _, ok := ac.mutation.Balance(); !ok {
 		return &ValidationError{Name: "balance", err: errors.New(`ent: missing required field "Account.balance"`)}
 	}
-	if v, ok := ac.mutation.Balance(); ok {
-		if err := account.BalanceValidator(v); err != nil {
-			return &ValidationError{Name: "balance", err: fmt.Errorf(`ent: validator failed for field "Account.balance": %w`, err)}
-		}
-	}
 	if _, ok := ac.mutation.Currency(); !ok {
 		return &ValidationError{Name: "currency", err: errors.New(`ent: missing required field "Account.currency"`)}
 	}
