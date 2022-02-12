@@ -54,6 +54,8 @@ type TransferTxResult struct {
 	ToEntry     *ent.Entry    `json:"to_entry"`
 }
 
+var txKey = struct{}{}
+
 // TransferTx performs a money transfer from one account to the other.
 // It creates a transfer record, and account entries, and update accounts' balance within a single database transaction
 func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
@@ -61,6 +63,11 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 
 	err := store.execTx(ctx, func(tx *ent.Tx) error {
 		var err error
+
+		txName := ctx.Value(txKey)
+
+		fmt.Println(txName, "create transfer")
+
 		result.Transfer, err = tx.Transfer.Create().
 			SetFromAccountID(arg.FromAccountID).
 			SetToAccountID(arg.ToAccountID).
@@ -71,6 +78,7 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		}
 
 		// From
+		fmt.Println(txName, "create entry 1")
 		result.FromEntry, err = tx.Entry.Create().
 			SetAccountID(arg.FromAccountID).
 			SetAmount(-arg.Ammount).
@@ -80,6 +88,7 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		}
 
 		// To
+		fmt.Println(txName, "create entry 2")
 		result.ToEntry, err = tx.Entry.Create().
 			SetAccountID(arg.ToAccountID).
 			SetAmount(arg.Ammount).
@@ -88,27 +97,47 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 			return err
 		}
 
-		account1, err := tx.Account.Get(ctx, arg.FromAccountID)
+		// SELECT FOR UPDATE を使って一貫性を保つ
+		// Get だと通常の SELECT になる
+		// account1, err := tx.Account.Get(ctx, arg.FromAccountID)
+		// if err != nil {
+		// 	return err
+		// }
+		// result.ToAccount, err = tx.Account.UpdateOneID(account1.ID).
+		// 	AddBalance(-arg.Ammount).
+		// 	Save(ctx)
+		fmt.Println(txName, "get account 1")
+		q1, err := tx.Account.Query().
+			Where(account.ID(arg.FromAccountID)).
+			ForUpdate().
+			Only(ctx)
+		if err != nil {
+			return err
+		}
+		fmt.Println(txName, "update account 1")
+		_, err = q1.Update().AddBalance(-arg.Ammount).Save(ctx)
 		if err != nil {
 			return err
 		}
 
-		tx.Account.Query().Where(account.ID(account1.ID))..
-		result.FromAccount, err = tx.Account.UpdateOneID(account1.ID).
-			AddBalance(-arg.Ammount).
-			Save(ctx)
+		// SELECT FOR UPDATE を使って一貫性を保つ
+		// account2, err := tx.Account.Get(ctx, arg.ToAccountID)
+		// if err != nil {
+		// 	return err
+		// }
+		// result.ToAccount, err = tx.Account.UpdateOneID(account2.ID).
+		// 	AddBalance(arg.Ammount).
+		// 	Save(ctx)
+		fmt.Println(txName, "get account 2")
+		q2, err := tx.Account.Query().
+			Where(account.ID(arg.ToAccountID)).
+			ForUpdate().
+			Only(ctx)
 		if err != nil {
 			return err
 		}
-
-		account2, err := tx.Account.Get(ctx, arg.ToAccountID)
-		if err != nil {
-			return err
-		}
-
-		result.ToAccount, err = tx.Account.UpdateOneID(account2.ID).
-			AddBalance(arg.Ammount).
-			Save(ctx)
+		fmt.Println(txName, "update account 2")
+		_, err = q2.Update().AddBalance(arg.Ammount).Save(ctx)
 		if err != nil {
 			return err
 		}

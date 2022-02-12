@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -28,6 +29,7 @@ type TransferQuery struct {
 	// eager-loading edges.
 	withFromAccounts *AccountQuery
 	withToAccounts   *AccountQuery
+	modifiers        []func(s *sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -402,6 +404,9 @@ func (tq *TransferQuery) sqlAll(ctx context.Context) ([]*Transfer, error) {
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(tq.modifiers) > 0 {
+		_spec.Modifiers = tq.modifiers
+	}
 	if err := sqlgraph.QueryNodes(ctx, tq.driver, _spec); err != nil {
 		return nil, err
 	}
@@ -466,6 +471,9 @@ func (tq *TransferQuery) sqlAll(ctx context.Context) ([]*Transfer, error) {
 
 func (tq *TransferQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := tq.querySpec()
+	if len(tq.modifiers) > 0 {
+		_spec.Modifiers = tq.modifiers
+	}
 	_spec.Node.Columns = tq.fields
 	if len(tq.fields) > 0 {
 		_spec.Unique = tq.unique != nil && *tq.unique
@@ -544,6 +552,9 @@ func (tq *TransferQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if tq.unique != nil && *tq.unique {
 		selector.Distinct()
 	}
+	for _, m := range tq.modifiers {
+		m(selector)
+	}
 	for _, p := range tq.predicates {
 		p(selector)
 	}
@@ -559,6 +570,32 @@ func (tq *TransferQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// ForUpdate locks the selected rows against concurrent updates, and prevent them from being
+// updated, deleted or "selected ... for update" by other sessions, until the transaction is
+// either committed or rolled-back.
+func (tq *TransferQuery) ForUpdate(opts ...sql.LockOption) *TransferQuery {
+	if tq.driver.Dialect() == dialect.Postgres {
+		tq.Unique(false)
+	}
+	tq.modifiers = append(tq.modifiers, func(s *sql.Selector) {
+		s.ForUpdate(opts...)
+	})
+	return tq
+}
+
+// ForShare behaves similarly to ForUpdate, except that it acquires a shared mode lock
+// on any rows that are read. Other sessions can read the rows, but cannot modify them
+// until your transaction commits.
+func (tq *TransferQuery) ForShare(opts ...sql.LockOption) *TransferQuery {
+	if tq.driver.Dialect() == dialect.Postgres {
+		tq.Unique(false)
+	}
+	tq.modifiers = append(tq.modifiers, func(s *sql.Selector) {
+		s.ForShare(opts...)
+	})
+	return tq
 }
 
 // TransferGroupBy is the group-by builder for Transfer entities.
