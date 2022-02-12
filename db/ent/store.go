@@ -65,8 +65,6 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 	err := store.execTx(ctx, func(tx *ent.Tx) error {
 		var err error
 
-		txName := ctx.Value(txKey)
-
 		result.Transfer, err = tx.Transfer.Create().
 			SetFromAccountID(arg.FromAccountID).
 			SetToAccountID(arg.ToAccountID).
