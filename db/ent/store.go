@@ -67,8 +67,6 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 
 		txName := ctx.Value(txKey)
 
-		fmt.Println(txName, "create transfer")
-
 		result.Transfer, err = tx.Transfer.Create().
 			SetFromAccountID(arg.FromAccountID).
 			SetToAccountID(arg.ToAccountID).
@@ -79,7 +77,6 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		}
 
 		// From
-		fmt.Println(txName, "create entry 1")
 		result.FromEntry, err = tx.Entry.Create().
 			SetAccountID(arg.FromAccountID).
 			SetAmount(-arg.Ammount).
@@ -89,7 +86,6 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		}
 
 		// To
-		fmt.Println(txName, "create entry 2")
 		result.ToEntry, err = tx.Entry.Create().
 			SetAccountID(arg.ToAccountID).
 			SetAmount(arg.Ammount).
@@ -107,7 +103,6 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		// result.ToAccount, err = tx.Account.UpdateOneID(account1.ID).
 		// 	AddBalance(-arg.Ammount).
 		// 	Save(ctx)
-		fmt.Println(txName, "get account 1")
 		q1, err := tx.Account.Query().
 			// `FOR UPDATE` を使う場合はシンプルに以下のように記述できる
 			// Where(account.ID(arg.FromAccountID)).
@@ -125,7 +120,6 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		if err != nil {
 			return err
 		}
-		fmt.Println(txName, "update account 1")
 		result.FromAccount, err = q1.Update().AddBalance(-arg.Ammount).Save(ctx)
 		if err != nil {
 			return err
@@ -139,7 +133,6 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		// result.ToAccount, err = tx.Account.UpdateOneID(account2.ID).
 		// 	AddBalance(arg.Ammount).
 		// 	Save(ctx)
-		fmt.Println(txName, "get account 2")
 		q2, err := tx.Account.Query().
 			// `FOR UPDATE` を使う場合はシンプルに以下のように記述できる
 			// Where(account.ID(arg.ToAccountID)).
@@ -157,7 +150,6 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		if err != nil {
 			return err
 		}
-		fmt.Println(txName, "update account 2")
 		result.ToAccount, err = q2.Update().AddBalance(arg.Ammount).Save(ctx)
 		if err != nil {
 			return err
