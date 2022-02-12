@@ -95,43 +95,35 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		// 同時に2つ以上のトランザクションが2つとも同一accountIdを指定し、FromとToが入れ替わっていた場合のデッドロック対策
 		// accountId が小さい順に処理することでデッドロックを避けている
 		if arg.FromAccountID < arg.ToAccountID {
-			result.FromAccount, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
-				ID:     arg.FromAccountID,
-				Amount: -arg.Ammount,
-			})
-			if err != nil {
-				return err
-			}
-
-			result.ToAccount, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
-				ID:     arg.ToAccountID,
-				Amount: arg.Ammount,
-			})
-			if err != nil {
-				return err
-			}
+			result.FromAccount, result.ToAccount, err = store.AddMoney(ctx, tx, arg.FromAccountID, -arg.Ammount, arg.ToAccountID, arg.Ammount)
 		} else {
-			result.ToAccount, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
-				ID:     arg.ToAccountID,
-				Amount: arg.Ammount,
-			})
-			if err != nil {
-				return err
-			}
-
-			result.FromAccount, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
-				ID:     arg.FromAccountID,
-				Amount: -arg.Ammount,
-			})
-			if err != nil {
-				return err
-			}
+			result.ToAccount, result.FromAccount, err = store.AddMoney(ctx, tx, arg.ToAccountID, arg.Ammount, arg.FromAccountID, -arg.Ammount)
 		}
 
 		return nil
 	})
 
 	return result, err
+}
+
+func (store *Store) AddMoney(ctx context.Context, tx *ent.Tx, accountID1, amount1, accountID2, amount2 int) (account1, account2 *ent.Account, err error) {
+	account1, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
+		ID:     accountID1,
+		Amount: amount1,
+	})
+	if err != nil {
+		return
+	}
+
+	account2, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
+		ID:     accountID2,
+		Amount: amount2,
+	})
+	if err != nil {
+		return
+	}
+
+	return
 }
 
 type AddAccountBalanceParams struct {
