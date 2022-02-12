@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"entgo.io/ent/dialect/sql"
 	"github.com/s14t284/simplebank/ent"
 	"github.com/s14t284/simplebank/ent/account"
 )
@@ -108,14 +109,24 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		// 	Save(ctx)
 		fmt.Println(txName, "get account 1")
 		q1, err := tx.Account.Query().
-			Where(account.ID(arg.FromAccountID)).
-			ForUpdate().
+			// `FOR UPDATE` を使う場合はシンプルに以下のように記述できる
+			// Where(account.ID(arg.FromAccountID)).
+			// ForUpdate().
+
+			// FOR NO KEY UPDATE はビルダーメソッドが用意されていないので下記のようにして書く
+			Where(func(s *sql.Selector) {
+				s.Where(sql.EQ(account.FieldID, arg.FromAccountID)).
+					For(sql.LockNoKeyUpdate)
+			}).
+			// Unique(false) を呼び出すことで SELECT DISTINCT => SELECT に変更
+			// psql において、FOR NO KEY UPDATE は SELECT DISTINCT と両立できない
+			Unique(false).
 			Only(ctx)
 		if err != nil {
 			return err
 		}
 		fmt.Println(txName, "update account 1")
-		_, err = q1.Update().AddBalance(-arg.Ammount).Save(ctx)
+		result.FromAccount, err = q1.Update().AddBalance(-arg.Ammount).Save(ctx)
 		if err != nil {
 			return err
 		}
@@ -130,14 +141,24 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		// 	Save(ctx)
 		fmt.Println(txName, "get account 2")
 		q2, err := tx.Account.Query().
-			Where(account.ID(arg.ToAccountID)).
-			ForUpdate().
+			// `FOR UPDATE` を使う場合はシンプルに以下のように記述できる
+			// Where(account.ID(arg.ToAccountID)).
+			// ForUpdate().
+
+			// FOR NO KEY UPDATE はビルダーメソッドが用意されていないので下記のようにして書く
+			Where(func(s *sql.Selector) {
+				s.Where(sql.EQ(account.FieldID, arg.ToAccountID)).
+					For(sql.LockNoKeyUpdate)
+			}).
+			// Unique(false) を呼び出すことで SELECT DISTINCT => SELECT に変更
+			// psql において、FOR NO KEY UPDATE は SELECT DISTINCT と両立できない
+			Unique(false).
 			Only(ctx)
 		if err != nil {
 			return err
 		}
 		fmt.Println(txName, "update account 2")
-		_, err = q2.Update().AddBalance(arg.Ammount).Save(ctx)
+		result.ToAccount, err = q2.Update().AddBalance(arg.Ammount).Save(ctx)
 		if err != nil {
 			return err
 		}
