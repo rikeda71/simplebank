@@ -8,9 +8,12 @@ migrateup:
 	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up
 migratedown:
 	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down
-ent:
-	go generate ./ent
 test:
 	go test -v -cover ./...
+
+ent:
+	go generate ./ent
+startdb:
+	docker container start postgres12
 
 .PHONY: createdb, dropdb, postgres, ent

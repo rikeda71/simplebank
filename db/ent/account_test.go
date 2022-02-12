@@ -90,6 +90,10 @@ func TestListAccounts(t *testing.T) {
 	client := createEntClient(t)
 	defer client.Close()
 
+	// テスト前に不要なアカウントを全て削除
+	_, err := client.Account.Delete().Where().Exec(context.Background())
+	require.NoError(t, err)
+
 	for i := 0; i < 10; i++ {
 		createRandomAccount(t)
 	}

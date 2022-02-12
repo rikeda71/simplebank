@@ -163,6 +163,11 @@ func (tc *TransferCreate) check() error {
 	if _, ok := tc.mutation.Amount(); !ok {
 		return &ValidationError{Name: "amount", err: errors.New(`ent: missing required field "Transfer.amount"`)}
 	}
+	if v, ok := tc.mutation.Amount(); ok {
+		if err := transfer.AmountValidator(v); err != nil {
+			return &ValidationError{Name: "amount", err: fmt.Errorf(`ent: validator failed for field "Transfer.amount": %w`, err)}
+		}
+	}
 	if _, ok := tc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Transfer.created_at"`)}
 	}

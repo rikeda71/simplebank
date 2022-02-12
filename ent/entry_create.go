@@ -143,11 +143,6 @@ func (ec *EntryCreate) check() error {
 	if _, ok := ec.mutation.Amount(); !ok {
 		return &ValidationError{Name: "amount", err: errors.New(`ent: missing required field "Entry.amount"`)}
 	}
-	if v, ok := ec.mutation.Amount(); ok {
-		if err := entry.AmountValidator(v); err != nil {
-			return &ValidationError{Name: "amount", err: fmt.Errorf(`ent: validator failed for field "Entry.amount": %w`, err)}
-		}
-	}
 	if _, ok := ec.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Entry.created_at"`)}
 	}

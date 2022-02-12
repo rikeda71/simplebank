@@ -146,11 +146,6 @@ func (eu *EntryUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (eu *EntryUpdate) check() error {
-	if v, ok := eu.mutation.Amount(); ok {
-		if err := entry.AmountValidator(v); err != nil {
-			return &ValidationError{Name: "amount", err: fmt.Errorf(`ent: validator failed for field "Entry.amount": %w`, err)}
-		}
-	}
 	if _, ok := eu.mutation.AccountsID(); eu.mutation.AccountsCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Entry.accounts"`)
 	}
@@ -374,11 +369,6 @@ func (euo *EntryUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (euo *EntryUpdateOne) check() error {
-	if v, ok := euo.mutation.Amount(); ok {
-		if err := entry.AmountValidator(v); err != nil {
-			return &ValidationError{Name: "amount", err: fmt.Errorf(`ent: validator failed for field "Entry.amount": %w`, err)}
-		}
-	}
 	if _, ok := euo.mutation.AccountsID(); euo.mutation.AccountsCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Entry.accounts"`)
 	}

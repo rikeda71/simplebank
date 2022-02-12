@@ -154,6 +154,11 @@ func (tu *TransferUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (tu *TransferUpdate) check() error {
+	if v, ok := tu.mutation.Amount(); ok {
+		if err := transfer.AmountValidator(v); err != nil {
+			return &ValidationError{Name: "amount", err: fmt.Errorf(`ent: validator failed for field "Transfer.amount": %w`, err)}
+		}
+	}
 	if _, ok := tu.mutation.FromAccountsID(); tu.mutation.FromAccountsCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Transfer.from_accounts"`)
 	}
@@ -417,6 +422,11 @@ func (tuo *TransferUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (tuo *TransferUpdateOne) check() error {
+	if v, ok := tuo.mutation.Amount(); ok {
+		if err := transfer.AmountValidator(v); err != nil {
+			return &ValidationError{Name: "amount", err: fmt.Errorf(`ent: validator failed for field "Transfer.amount": %w`, err)}
+		}
+	}
 	if _, ok := tuo.mutation.FromAccountsID(); tuo.mutation.FromAccountsCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Transfer.from_accounts"`)
 	}

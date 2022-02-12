@@ -21,7 +21,8 @@ func (Transfer) Fields() []ent.Field {
 		field.Int("from_account_id"),
 		field.Int("to_account_id"),
 
-		field.Int("amount"),
+		// Positive で正数のみになる制約を付与
+		field.Int("amount").Positive(),
 		field.Time("created_at").Default(time.Now).Immutable(),
 	}
 }
