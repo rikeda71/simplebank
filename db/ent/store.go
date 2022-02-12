@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/s14t284/simplebank/ent"
+	"github.com/s14t284/simplebank/ent/account"
 )
 
 type Store struct {
@@ -87,7 +88,30 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 			return err
 		}
 
-		// TODO: update accounts' balance
+		account1, err := tx.Account.Get(ctx, arg.FromAccountID)
+		if err != nil {
+			return err
+		}
+
+		tx.Account.Query().Where(account.ID(account1.ID))..
+		result.FromAccount, err = tx.Account.UpdateOneID(account1.ID).
+			AddBalance(-arg.Ammount).
+			Save(ctx)
+		if err != nil {
+			return err
+		}
+
+		account2, err := tx.Account.Get(ctx, arg.ToAccountID)
+		if err != nil {
+			return err
+		}
+
+		result.ToAccount, err = tx.Account.UpdateOneID(account2.ID).
+			AddBalance(arg.Ammount).
+			Save(ctx)
+		if err != nil {
+			return err
+		}
 
 		return nil
 	})
