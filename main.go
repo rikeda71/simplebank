@@ -7,16 +7,12 @@ import (
 	"github.com/s14t284/simplebank/api"
 	db "github.com/s14t284/simplebank/db/ent"
 	"github.com/s14t284/simplebank/ent"
-)
-
-const (
-	dbDriver      = "postgres"
-	dbSource      = "host=localhost port=5432 user=root dbname=simple_bank password=secret sslmode=disable"
-	serverAddress = "0.0.0.0:8080"
+	"github.com/s14t284/simplebank/util"
 )
 
 func main() {
-	entClient, err := ent.Open(dbDriver, dbSource)
+	config, err := util.LoadConfig(".")
+	entClient, err := ent.Open(config.DBDriver, config.DBSource)
 	if err != nil {
 		log.Fatalf("failed opening connection to sqllite: %v", err)
 	}
@@ -25,5 +21,5 @@ func main() {
 	store := db.NewStore(entClient)
 	server := api.NewServer(store)
 
-	err = server.Start(serverAddress)
+	err = server.Start(config.ServerAddress)
 }
