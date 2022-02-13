@@ -54,7 +54,7 @@ func (store *SQLStore) GetAccountForUpdate(ctx context.Context, tx *ent.Tx, id i
 	// 	return err
 	// }
 	// result.ToAccount, err = tx.Account.UpdateOneID(account1.ID).
-	// 	AddBalance(-arg.Ammount).
+	// 	AddBalance(-arg.Amount).
 	// 	Save(ctx)
 	return tx.Account.Query().
 		// `FOR UPDATE` を使う場合はシンプルに以下のように記述できる
