@@ -12,10 +12,12 @@ test:
 	go test -v -cover ./...
 server:
 	go run main.go
+mock:
+	mockgen -package mockdb -destination db/mock/store.go github.com/s14t284/simplebank/db/ent Store
 
 ent:
 	go generate ./ent
 startdb:
 	docker container start postgres12
 
-.PHONY: createdb, dropdb, postgres, ent
+.PHONY: createdb, dropdb, postgres, migrateup, test, server, mock, ent, startdb
