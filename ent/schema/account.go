@@ -24,7 +24,7 @@ func (Account) Fields() []ent.Field {
 		// .Optional() を設定するとnullableなカラムになる
 		// 今回は全てのカラムが NOT NULL 制約が付与されるため、デフォルトのままで良い
 		field.String("owner"),
-		field.Int("balance").Positive(),
+		field.Int("balance"),
 		field.String("currency"),
 
 		// Default でカラム作成時に付与される値を設定
