@@ -28,7 +28,7 @@ func TestTransferTx(t *testing.T) {
 			result, err := store.TransferTx(ctx, TransferTxParams{
 				FromAccountID: account1.ID,
 				ToAccountID:   account2.ID,
-				Ammount:       amount,
+				Amount:        amount,
 			})
 
 			errs <- err
@@ -142,7 +142,7 @@ func TestTransferTxDeadlock(t *testing.T) {
 			_, err := store.TransferTx(ctx, TransferTxParams{
 				FromAccountID: fromAccountID,
 				ToAccountID:   toAccountID,
-				Ammount:       amount,
+				Amount:        amount,
 			})
 
 			errs <- err

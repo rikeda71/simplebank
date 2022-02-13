@@ -49,7 +49,7 @@ func (store *SQLStore) execTx(ctx context.Context, fn func(tx *ent.Tx) error) er
 type TransferTxParams struct {
 	FromAccountID int `json:"from_account_id"`
 	ToAccountID   int `json:"to_account_id"`
-	Ammount       int `json:"ammount"`
+	Amount        int `json:"Amount"`
 }
 
 // TransferTxResult is the result of the transfer transaction
@@ -74,7 +74,7 @@ func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (Tr
 		result.Transfer, err = store.CreateTransfer(ctx, tx, CreateTransferParams{
 			FromAccountID: arg.FromAccountID,
 			ToAccountID:   arg.ToAccountID,
-			Amount:        arg.Ammount,
+			Amount:        arg.Amount,
 		})
 		if err != nil {
 			return err
@@ -83,7 +83,7 @@ func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (Tr
 		// From
 		result.FromEntry, err = store.CreateEntry(ctx, tx, CreateEntryParams{
 			AccountID: arg.FromAccountID,
-			Amount:    -arg.Ammount,
+			Amount:    -arg.Amount,
 		})
 		if err != nil {
 			return err
@@ -92,7 +92,7 @@ func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (Tr
 		// To
 		result.ToEntry, err = store.CreateEntry(ctx, tx, CreateEntryParams{
 			AccountID: arg.ToAccountID,
-			Amount:    arg.Ammount,
+			Amount:    arg.Amount,
 		})
 		if err != nil {
 			return err
@@ -101,9 +101,9 @@ func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (Tr
 		// 同時に2つ以上のトランザクションが2つとも同一accountIdを指定し、FromとToが入れ替わっていた場合のデッドロック対策
 		// accountId が小さい順に処理することでデッドロックを避けている
 		if arg.FromAccountID < arg.ToAccountID {
-			result.FromAccount, result.ToAccount, err = store.addMoney(ctx, tx, arg.FromAccountID, -arg.Ammount, arg.ToAccountID, arg.Ammount)
+			result.FromAccount, result.ToAccount, err = store.addMoney(ctx, tx, arg.FromAccountID, -arg.Amount, arg.ToAccountID, arg.Amount)
 		} else {
-			result.ToAccount, result.FromAccount, err = store.addMoney(ctx, tx, arg.ToAccountID, arg.Ammount, arg.FromAccountID, -arg.Ammount)
+			result.ToAccount, result.FromAccount, err = store.addMoney(ctx, tx, arg.ToAccountID, arg.Amount, arg.FromAccountID, -arg.Amount)
 		}
 
 		return nil
