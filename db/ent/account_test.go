@@ -12,7 +12,7 @@ import (
 
 func createRandomAccount(t *testing.T, store *SQLStore) *ent.Account {
 	arg := CreateAccountParams{
-		Owner:    util.RandomString(3),
+		Owner:    util.RandomOwner(),
 		Balance:  int(util.RandomMoney()),
 		Currency: util.RandomCurrency(),
 	}

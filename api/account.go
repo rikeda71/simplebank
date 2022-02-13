@@ -45,9 +45,7 @@ func (server *Server) getAccount(ctx *gin.Context) {
 	}
 	account, err := server.store.GetAccount(ctx, req.ID)
 	if err != nil {
-		// FIXME: これはうまくいかないはずなので、実際にはこのようなハンドリングはしない
-		ne := ent.NotFoundError{}
-		if err == &ne {
+		if ent.IsNotFound(err) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
