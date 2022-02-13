@@ -12,8 +12,8 @@ func TestTransferTx(t *testing.T) {
 	defer client.Close()
 	store := NewStore(client)
 
-	account1 := createRandomAccount(t)
-	account2 := createRandomAccount(t)
+	account1 := createRandomAccount(t, store)
+	account2 := createRandomAccount(t, store)
 
 	// run n concurrent transfer transactions
 	n := 5
@@ -55,7 +55,7 @@ func TestTransferTx(t *testing.T) {
 		require.NotZero(t, transfer.ID)
 		require.NotZero(t, transfer.CreatedAt)
 
-		_, err = store.DbClient.Transfer.Get(context.Background(), transfer.ID)
+		_, err = store.entClient.Transfer.Get(context.Background(), transfer.ID)
 		require.NoError(t, err)
 
 		// check entries
@@ -66,7 +66,7 @@ func TestTransferTx(t *testing.T) {
 		require.NotZero(t, fromEntry.ID)
 		require.NotZero(t, fromEntry.CreatedAt)
 
-		_, err = store.DbClient.Entry.Get(context.Background(), fromEntry.ID)
+		_, err = store.entClient.Entry.Get(context.Background(), fromEntry.ID)
 		require.NoError(t, err)
 
 		toEntry := result.ToEntry
@@ -76,7 +76,7 @@ func TestTransferTx(t *testing.T) {
 		require.NotZero(t, toEntry.ID)
 		require.NotZero(t, toEntry.CreatedAt)
 
-		_, err = store.DbClient.Entry.Get(context.Background(), toEntry.ID)
+		_, err = store.entClient.Entry.Get(context.Background(), toEntry.ID)
 		require.NoError(t, err)
 
 		// check accounts
@@ -118,10 +118,11 @@ func TestTransferTx(t *testing.T) {
 func TestTransferTxDeadlock(t *testing.T) {
 	client := createEntClient(t)
 	defer client.Close()
+
 	store := NewStore(client)
 
-	account1 := createRandomAccount(t)
-	account2 := createRandomAccount(t)
+	account1 := createRandomAccount(t, store)
+	account2 := createRandomAccount(t, store)
 
 	n := 10
 	amount := 10

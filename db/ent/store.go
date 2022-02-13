@@ -4,23 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	"entgo.io/ent/dialect/sql"
 	"github.com/s14t284/simplebank/ent"
-	"github.com/s14t284/simplebank/ent/account"
 )
 
 type Store struct {
-	DbClient *ent.Client
+	entClient *ent.Client
 }
 
 func NewStore(client *ent.Client) *Store {
 	return &Store{
-		DbClient: client,
+		entClient: client,
 	}
 }
 
 func (store *Store) execTx(ctx context.Context, fn func(tx *ent.Tx) error) error {
-	tx, err := store.DbClient.Tx(ctx)
+	tx, err := store.entClient.Tx(ctx)
 	if err != nil {
 		return err
 	}
@@ -124,40 +122,4 @@ func (store *Store) AddMoney(ctx context.Context, tx *ent.Tx, accountID1, amount
 	}
 
 	return
-}
-
-type AddAccountBalanceParams struct {
-	ID     int
-	Amount int
-}
-
-// AddAccountBalance update account balance
-func (store *Store) AddAccountBalance(ctx context.Context, tx *ent.Tx, params AddAccountBalanceParams) (*ent.Account, error) {
-	// SELECT FOR UPDATE を使って一貫性を保つ
-	// Get だと通常の SELECT になる
-	// account1, err := tx.Account.Get(ctx, arg.FromAccountID)
-	// if err != nil {
-	// 	return err
-	// }
-	// result.ToAccount, err = tx.Account.UpdateOneID(account1.ID).
-	// 	AddBalance(-arg.Ammount).
-	// 	Save(ctx)
-	q, err := tx.Account.Query().
-		// `FOR UPDATE` を使う場合はシンプルに以下のように記述できる
-		// Where(account.ID(arg.FromAccountID)).
-		// ForUpdate().
-
-		// FOR NO KEY UPDATE はビルダーメソッドが用意されていないので下記のようにして書く
-		Where(func(s *sql.Selector) {
-			s.Where(sql.EQ(account.FieldID, params.ID)).
-				For(sql.LockNoKeyUpdate)
-		}).
-		// Unique(false) を呼び出すことで SELECT DISTINCT => SELECT に変更
-		// psql において、FOR NO KEY UPDATE は SELECT DISTINCT と両立できない
-		Unique(false).
-		Only(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return q.Update().AddBalance(params.Amount).Save(ctx)
 }

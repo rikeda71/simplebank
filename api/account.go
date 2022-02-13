@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	db "github.com/s14t284/simplebank/db/ent"
 	"github.com/s14t284/simplebank/ent"
 )
 
@@ -19,11 +20,11 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
-	account, err := server.store.DbClient.Account.Create().
-		SetOwner(req.Owner).
-		SetCurrency(req.Currency).
-		SetBalance(0).
-		Save(ctx)
+	account, err := server.store.CreateAccount(ctx, db.CreateAccountParams{
+		Owner:    req.Owner,
+		Balance:  0,
+		Currency: req.Currency,
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -42,7 +43,7 @@ func (server *Server) getAccount(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-	account, err := server.store.DbClient.Account.Get(ctx, req.ID)
+	account, err := server.store.GetAccount(ctx, req.ID)
 	if err != nil {
 		// FIXME: これはうまくいかないはずなので、実際にはこのようなハンドリングはしない
 		ne := ent.NotFoundError{}
@@ -68,10 +69,12 @@ func (server *Server) listAccounts(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-	accounts, err := server.store.DbClient.Account.Query().
-		Limit(req.PageSize).
-		Offset(req.PageID).
-		All(ctx)
+	accounts, err := server.store.
+		ListAccounts(ctx, db.ListAccountsParams{
+			Owner:  "",
+			Limit:  req.PageSize,
+			Offset: req.PageID,
+		})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
