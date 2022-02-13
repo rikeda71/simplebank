@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createRandomAccount(t *testing.T, store *Store) *ent.Account {
+func createRandomAccount(t *testing.T, store *SQLStore) *ent.Account {
 	arg := CreateAccountParams{
 		Owner:    util.RandomString(3),
 		Balance:  int(util.RandomMoney()),

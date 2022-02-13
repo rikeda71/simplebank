@@ -7,17 +7,25 @@ import (
 	"github.com/s14t284/simplebank/ent"
 )
 
-type Store struct {
+// SQLStore provides all functions to execute db queries and transaction
+type Store interface {
+	Querier
+	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
+}
+
+// SQLStore provides all functions to execute SQL queries and transaction
+type SQLStore struct {
 	entClient *ent.Client
 }
 
-func NewStore(client *ent.Client) *Store {
-	return &Store{
+// NewStore creates a new store
+func NewStore(client *ent.Client) *SQLStore {
+	return &SQLStore{
 		entClient: client,
 	}
 }
 
-func (store *Store) execTx(ctx context.Context, fn func(tx *ent.Tx) error) error {
+func (store *SQLStore) execTx(ctx context.Context, fn func(tx *ent.Tx) error) error {
 	tx, err := store.entClient.Tx(ctx)
 	if err != nil {
 		return err
@@ -57,35 +65,35 @@ var txKey = struct{}{}
 
 // TransferTx performs a money transfer from one account to the other.
 // It creates a transfer record, and account entries, and update accounts' balance within a single database transaction
-func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTx(ctx, func(tx *ent.Tx) error {
 		var err error
 
-		result.Transfer, err = tx.Transfer.Create().
-			SetFromAccountID(arg.FromAccountID).
-			SetToAccountID(arg.ToAccountID).
-			SetAmount(arg.Ammount).
-			Save(ctx)
+		result.Transfer, err = store.CreateTransfer(ctx, tx, CreateTransferParams{
+			FromAccountID: arg.FromAccountID,
+			ToAccountID:   arg.ToAccountID,
+			Amount:        arg.Ammount,
+		})
 		if err != nil {
 			return err
 		}
 
 		// From
-		result.FromEntry, err = tx.Entry.Create().
-			SetAccountID(arg.FromAccountID).
-			SetAmount(-arg.Ammount).
-			Save(ctx)
+		result.FromEntry, err = store.CreateEntry(ctx, tx, CreateEntryParams{
+			AccountID: arg.FromAccountID,
+			Amount:    -arg.Ammount,
+		})
 		if err != nil {
 			return err
 		}
 
 		// To
-		result.ToEntry, err = tx.Entry.Create().
-			SetAccountID(arg.ToAccountID).
-			SetAmount(arg.Ammount).
-			Save(ctx)
+		result.ToEntry, err = store.CreateEntry(ctx, tx, CreateEntryParams{
+			AccountID: arg.ToAccountID,
+			Amount:    arg.Ammount,
+		})
 		if err != nil {
 			return err
 		}
@@ -93,9 +101,9 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		// 同時に2つ以上のトランザクションが2つとも同一accountIdを指定し、FromとToが入れ替わっていた場合のデッドロック対策
 		// accountId が小さい順に処理することでデッドロックを避けている
 		if arg.FromAccountID < arg.ToAccountID {
-			result.FromAccount, result.ToAccount, err = store.AddMoney(ctx, tx, arg.FromAccountID, -arg.Ammount, arg.ToAccountID, arg.Ammount)
+			result.FromAccount, result.ToAccount, err = store.addMoney(ctx, tx, arg.FromAccountID, -arg.Ammount, arg.ToAccountID, arg.Ammount)
 		} else {
-			result.ToAccount, result.FromAccount, err = store.AddMoney(ctx, tx, arg.ToAccountID, arg.Ammount, arg.FromAccountID, -arg.Ammount)
+			result.ToAccount, result.FromAccount, err = store.addMoney(ctx, tx, arg.ToAccountID, arg.Ammount, arg.FromAccountID, -arg.Ammount)
 		}
 
 		return nil
@@ -104,7 +112,7 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 	return result, err
 }
 
-func (store *Store) AddMoney(ctx context.Context, tx *ent.Tx, accountID1, amount1, accountID2, amount2 int) (account1, account2 *ent.Account, err error) {
+func (store *SQLStore) addMoney(ctx context.Context, tx *ent.Tx, accountID1, amount1, accountID2, amount2 int) (account1, account2 *ent.Account, err error) {
 	account1, err = store.AddAccountBalance(ctx, tx, AddAccountBalanceParams{
 		ID:     accountID1,
 		Amount: amount1,

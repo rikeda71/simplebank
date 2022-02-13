@@ -14,12 +14,12 @@ type AddAccountBalanceParams struct {
 }
 
 // AddAccountBalance update account balance
-func (store *Store) AddAccountBalance(ctx context.Context, tx *ent.Tx, params AddAccountBalanceParams) (*ent.Account, error) {
-	account, err := store.GetAccountForUpdate(ctx, tx, params.ID)
+func (store *SQLStore) AddAccountBalance(ctx context.Context, tx *ent.Tx, arg AddAccountBalanceParams) (*ent.Account, error) {
+	account, err := store.GetAccountForUpdate(ctx, tx, arg.ID)
 	if err != nil {
 		return nil, err
 	}
-	return account.Update().AddBalance(params.Amount).Save(ctx)
+	return account.Update().AddBalance(arg.Amount).Save(ctx)
 }
 
 // CRUD
@@ -30,7 +30,7 @@ type CreateAccountParams struct {
 	Currency string `json:"currency"`
 }
 
-func (store *Store) CreateAccount(ctx context.Context, arg CreateAccountParams) (*ent.Account, error) {
+func (store *SQLStore) CreateAccount(ctx context.Context, arg CreateAccountParams) (*ent.Account, error) {
 	return store.entClient.Account.Create().
 		SetOwner(arg.Owner).
 		SetBalance(arg.Balance).
@@ -38,15 +38,15 @@ func (store *Store) CreateAccount(ctx context.Context, arg CreateAccountParams) 
 		Save(context.Background())
 }
 
-func (store *Store) DeleteAccount(ctx context.Context, id int) error {
+func (store *SQLStore) DeleteAccount(ctx context.Context, id int) error {
 	return store.entClient.Account.DeleteOneID(id).Exec(ctx)
 }
 
-func (store *Store) GetAccount(ctx context.Context, id int) (*ent.Account, error) {
+func (store *SQLStore) GetAccount(ctx context.Context, id int) (*ent.Account, error) {
 	return store.entClient.Account.Get(ctx, id)
 }
 
-func (store *Store) GetAccountForUpdate(ctx context.Context, tx *ent.Tx, id int) (*ent.Account, error) {
+func (store *SQLStore) GetAccountForUpdate(ctx context.Context, tx *ent.Tx, id int) (*ent.Account, error) {
 	// SELECT FOR UPDATE を使って一貫性を保つ
 	// Get だと通常の SELECT になる
 	// account1, err := tx.Account.Get(ctx, arg.FromAccountID)
@@ -78,7 +78,7 @@ type ListAccountsParams struct {
 	Offset int    `json:"offset"`
 }
 
-func (store *Store) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*ent.Account, error) {
+func (store *SQLStore) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*ent.Account, error) {
 	return store.entClient.Account.Query().
 		Where(account.OwnerContains(arg.Owner)).
 		Limit(arg.Limit).
@@ -91,7 +91,7 @@ type UpdateAccountParams struct {
 	Balance int `json:"balance"`
 }
 
-func (store *Store) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*ent.Account, error) {
+func (store *SQLStore) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*ent.Account, error) {
 	return store.entClient.Account.UpdateOneID(arg.ID).
 		SetBalance(arg.Balance).
 		Save(ctx)
