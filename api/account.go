@@ -2,8 +2,10 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 	db "github.com/s14t284/simplebank/db/ent"
 	"github.com/s14t284/simplebank/ent"
 )
@@ -26,6 +28,21 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		Currency: req.Currency,
 	})
 	if err != nil {
+		// ent を使っているのでこっちに引っかかる
+		if ent.IsConstraintError(err) || ent.IsValidationError(err) {
+			if strings.Contains(err.Error(), "violate") {
+				ctx.JSON(http.StatusForbidden, errorResponse(err))
+				return
+			}
+		}
+		// ORMに頼っていない場合は以下に引っかかる
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code.Name() {
+			case "foreign_key_violation", "unique_violation":
+				ctx.JSON(http.StatusForbidden, errorResponse(err))
+				return
+			}
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
