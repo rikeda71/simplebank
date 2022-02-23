@@ -13,6 +13,7 @@ import (
 	"github.com/s14t284/simplebank/ent/account"
 	"github.com/s14t284/simplebank/ent/entry"
 	"github.com/s14t284/simplebank/ent/transfer"
+	"github.com/s14t284/simplebank/ent/user"
 )
 
 // AccountCreate is the builder for creating a Account entity.
@@ -97,6 +98,17 @@ func (ac *AccountCreate) AddToTransfers(t ...*Transfer) *AccountCreate {
 		ids[i] = t[i].ID
 	}
 	return ac.AddToTransferIDs(ids...)
+}
+
+// SetUsersID sets the "users" edge to the User entity by ID.
+func (ac *AccountCreate) SetUsersID(id string) *AccountCreate {
+	ac.mutation.SetUsersID(id)
+	return ac
+}
+
+// SetUsers sets the "users" edge to the User entity.
+func (ac *AccountCreate) SetUsers(u *User) *AccountCreate {
+	return ac.SetUsersID(u.ID)
 }
 
 // Mutation returns the AccountMutation object of the builder.
@@ -190,6 +202,9 @@ func (ac *AccountCreate) check() error {
 	if _, ok := ac.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Account.created_at"`)}
 	}
+	if _, ok := ac.mutation.UsersID(); !ok {
+		return &ValidationError{Name: "users", err: errors.New(`ent: missing required edge "Account.users"`)}
+	}
 	return nil
 }
 
@@ -217,14 +232,6 @@ func (ac *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 			},
 		}
 	)
-	if value, ok := ac.mutation.Owner(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: account.FieldOwner,
-		})
-		_node.Owner = value
-	}
 	if value, ok := ac.mutation.Balance(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
@@ -304,6 +311,26 @@ func (ac *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ac.mutation.UsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   account.UsersTable,
+			Columns: []string{account.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.Owner = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

@@ -14,3 +14,6 @@ type Entry func(*sql.Selector)
 
 // Transfer is the predicate function for transfer builders.
 type Transfer func(*sql.Selector)
+
+// User is the predicate function for user builders.
+type User func(*sql.Selector)

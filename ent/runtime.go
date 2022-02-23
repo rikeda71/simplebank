@@ -9,6 +9,7 @@ import (
 	"github.com/s14t284/simplebank/ent/entry"
 	"github.com/s14t284/simplebank/ent/schema"
 	"github.com/s14t284/simplebank/ent/transfer"
+	"github.com/s14t284/simplebank/ent/user"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -37,4 +38,26 @@ func init() {
 	transferDescCreatedAt := transferFields[3].Descriptor()
 	// transfer.DefaultCreatedAt holds the default value on creation for the created_at field.
 	transfer.DefaultCreatedAt = transferDescCreatedAt.Default.(func() time.Time)
+	userFields := schema.User{}.Fields()
+	_ = userFields
+	// userDescHashedPassword is the schema descriptor for hashed_password field.
+	userDescHashedPassword := userFields[1].Descriptor()
+	// user.HashedPasswordValidator is a validator for the "hashed_password" field. It is called by the builders before save.
+	user.HashedPasswordValidator = userDescHashedPassword.Validators[0].(func(string) error)
+	// userDescFullName is the schema descriptor for full_name field.
+	userDescFullName := userFields[2].Descriptor()
+	// user.FullNameValidator is a validator for the "full_name" field. It is called by the builders before save.
+	user.FullNameValidator = userDescFullName.Validators[0].(func(string) error)
+	// userDescEmail is the schema descriptor for email field.
+	userDescEmail := userFields[3].Descriptor()
+	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
+	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
+	// userDescPasswordChangedAt is the schema descriptor for password_changed_at field.
+	userDescPasswordChangedAt := userFields[4].Descriptor()
+	// user.DefaultPasswordChangedAt holds the default value on creation for the password_changed_at field.
+	user.DefaultPasswordChangedAt = userDescPasswordChangedAt.Default.(func() time.Time)
+	// userDescCreatedAt is the schema descriptor for created_at field.
+	userDescCreatedAt := userFields[5].Descriptor()
+	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
+	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
 }

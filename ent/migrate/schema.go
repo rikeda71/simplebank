@@ -11,21 +11,34 @@ var (
 	// AccountsColumns holds the columns for the "accounts" table.
 	AccountsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "owner", Type: field.TypeString},
 		{Name: "balance", Type: field.TypeInt},
 		{Name: "currency", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
+		{Name: "owner", Type: field.TypeString, Nullable: true},
 	}
 	// AccountsTable holds the schema information for the "accounts" table.
 	AccountsTable = &schema.Table{
 		Name:       "accounts",
 		Columns:    AccountsColumns,
 		PrimaryKey: []*schema.Column{AccountsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "accounts_users_accounts",
+				Columns:    []*schema.Column{AccountsColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 		Indexes: []*schema.Index{
 			{
 				Name:    "account_owner",
 				Unique:  true,
-				Columns: []*schema.Column{AccountsColumns[1]},
+				Columns: []*schema.Column{AccountsColumns[4]},
+			},
+			{
+				Name:    "account_owner_currency",
+				Unique:  true,
+				Columns: []*schema.Column{AccountsColumns[4], AccountsColumns[2]},
 			},
 		},
 	}
@@ -102,15 +115,32 @@ var (
 			},
 		},
 	}
+	// UsersColumns holds the columns for the "users" table.
+	UsersColumns = []*schema.Column{
+		{Name: "username", Type: field.TypeString},
+		{Name: "hashed_password", Type: field.TypeString},
+		{Name: "full_name", Type: field.TypeString},
+		{Name: "email", Type: field.TypeString, Unique: true},
+		{Name: "password_changed_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// UsersTable holds the schema information for the "users" table.
+	UsersTable = &schema.Table{
+		Name:       "users",
+		Columns:    UsersColumns,
+		PrimaryKey: []*schema.Column{UsersColumns[0]},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AccountsTable,
 		EntriesTable,
 		TransfersTable,
+		UsersTable,
 	}
 )
 
 func init() {
+	AccountsTable.ForeignKeys[0].RefTable = UsersTable
 	EntriesTable.ForeignKeys[0].RefTable = AccountsTable
 	TransfersTable.ForeignKeys[0].RefTable = AccountsTable
 	TransfersTable.ForeignKeys[1].RefTable = AccountsTable

@@ -39,11 +39,18 @@ func (Account) Edges() []ent.Edge {
 		edge.To("entries", Entry.Type),
 		edge.To("from_transfers", Transfer.Type),
 		edge.To("to_transfers", Transfer.Type),
+
+		edge.From("users", User.Type).
+			Ref("accounts").
+			Field("owner").
+			Unique().
+			Required(),
 	}
 }
 
 func (Account) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("owner").Unique(),
+		index.Fields("owner", "currency").Unique(),
 	}
 }
