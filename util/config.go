@@ -1,6 +1,10 @@
 package util
 
-import "github.com/spf13/viper"
+import (
+	"fmt"
+
+	"github.com/spf13/viper"
+)
 
 // Config stores all configuration of the application.
 // The values are read by viper from a config file or environment variables.
@@ -25,4 +29,8 @@ func LoadConfig(path string) (config Config, err error) {
 
 	err = viper.Unmarshal(&config)
 	return
+}
+
+func RandomEmail() string {
+	return fmt.Sprintf("%s@email.com", RandomString(6))
 }
