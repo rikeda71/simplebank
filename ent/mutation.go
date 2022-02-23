@@ -189,9 +189,22 @@ func (m *AccountMutation) OldOwner(ctx context.Context) (v string, err error) {
 	return oldValue.Owner, nil
 }
 
+// ClearOwner clears the value of the "owner" field.
+func (m *AccountMutation) ClearOwner() {
+	m.users = nil
+	m.clearedFields[account.FieldOwner] = struct{}{}
+}
+
+// OwnerCleared returns if the "owner" field was cleared in this mutation.
+func (m *AccountMutation) OwnerCleared() bool {
+	_, ok := m.clearedFields[account.FieldOwner]
+	return ok
+}
+
 // ResetOwner resets all changes to the "owner" field.
 func (m *AccountMutation) ResetOwner() {
 	m.users = nil
+	delete(m.clearedFields, account.FieldOwner)
 }
 
 // SetBalance sets the "balance" field.
@@ -496,7 +509,7 @@ func (m *AccountMutation) ClearUsers() {
 
 // UsersCleared reports if the "users" edge to the User entity was cleared.
 func (m *AccountMutation) UsersCleared() bool {
-	return m.clearedusers
+	return m.OwnerCleared() || m.clearedusers
 }
 
 // UsersID returns the "users" edge ID in the mutation.
@@ -669,7 +682,11 @@ func (m *AccountMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *AccountMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(account.FieldOwner) {
+		fields = append(fields, account.FieldOwner)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -682,6 +699,11 @@ func (m *AccountMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *AccountMutation) ClearField(name string) error {
+	switch name {
+	case account.FieldOwner:
+		m.ClearOwner()
+		return nil
+	}
 	return fmt.Errorf("unknown Account nullable field %s", name)
 }
 

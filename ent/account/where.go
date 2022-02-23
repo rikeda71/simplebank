@@ -218,6 +218,20 @@ func OwnerHasSuffix(v string) predicate.Account {
 	})
 }
 
+// OwnerIsNil applies the IsNil predicate on the "owner" field.
+func OwnerIsNil() predicate.Account {
+	return predicate.Account(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldOwner)))
+	})
+}
+
+// OwnerNotNil applies the NotNil predicate on the "owner" field.
+func OwnerNotNil() predicate.Account {
+	return predicate.Account(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldOwner)))
+	})
+}
+
 // OwnerEqualFold applies the EqualFold predicate on the "owner" field.
 func OwnerEqualFold(v string) predicate.Account {
 	return predicate.Account(func(s *sql.Selector) {

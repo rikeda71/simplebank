@@ -36,6 +36,20 @@ func (au *AccountUpdate) SetOwner(s string) *AccountUpdate {
 	return au
 }
 
+// SetNillableOwner sets the "owner" field if the given value is not nil.
+func (au *AccountUpdate) SetNillableOwner(s *string) *AccountUpdate {
+	if s != nil {
+		au.SetOwner(*s)
+	}
+	return au
+}
+
+// ClearOwner clears the value of the "owner" field.
+func (au *AccountUpdate) ClearOwner() *AccountUpdate {
+	au.mutation.ClearOwner()
+	return au
+}
+
 // SetBalance sets the "balance" field.
 func (au *AccountUpdate) SetBalance(i int) *AccountUpdate {
 	au.mutation.ResetBalance()
@@ -103,6 +117,14 @@ func (au *AccountUpdate) AddToTransfers(t ...*Transfer) *AccountUpdate {
 // SetUsersID sets the "users" edge to the User entity by ID.
 func (au *AccountUpdate) SetUsersID(id string) *AccountUpdate {
 	au.mutation.SetUsersID(id)
+	return au
+}
+
+// SetNillableUsersID sets the "users" edge to the User entity by ID if the given value is not nil.
+func (au *AccountUpdate) SetNillableUsersID(id *string) *AccountUpdate {
+	if id != nil {
+		au = au.SetUsersID(*id)
+	}
 	return au
 }
 
@@ -192,18 +214,12 @@ func (au *AccountUpdate) Save(ctx context.Context) (int, error) {
 		affected int
 	)
 	if len(au.hooks) == 0 {
-		if err = au.check(); err != nil {
-			return 0, err
-		}
 		affected, err = au.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*AccountMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = au.check(); err != nil {
-				return 0, err
 			}
 			au.mutation = mutation
 			affected, err = au.sqlSave(ctx)
@@ -243,14 +259,6 @@ func (au *AccountUpdate) ExecX(ctx context.Context) {
 	if err := au.Exec(ctx); err != nil {
 		panic(err)
 	}
-}
-
-// check runs all checks and user-defined validators on the builder.
-func (au *AccountUpdate) check() error {
-	if _, ok := au.mutation.UsersID(); au.mutation.UsersCleared() && !ok {
-		return errors.New(`ent: clearing a required unique edge "Account.users"`)
-	}
-	return nil
 }
 
 func (au *AccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
@@ -514,6 +522,20 @@ func (auo *AccountUpdateOne) SetOwner(s string) *AccountUpdateOne {
 	return auo
 }
 
+// SetNillableOwner sets the "owner" field if the given value is not nil.
+func (auo *AccountUpdateOne) SetNillableOwner(s *string) *AccountUpdateOne {
+	if s != nil {
+		auo.SetOwner(*s)
+	}
+	return auo
+}
+
+// ClearOwner clears the value of the "owner" field.
+func (auo *AccountUpdateOne) ClearOwner() *AccountUpdateOne {
+	auo.mutation.ClearOwner()
+	return auo
+}
+
 // SetBalance sets the "balance" field.
 func (auo *AccountUpdateOne) SetBalance(i int) *AccountUpdateOne {
 	auo.mutation.ResetBalance()
@@ -581,6 +603,14 @@ func (auo *AccountUpdateOne) AddToTransfers(t ...*Transfer) *AccountUpdateOne {
 // SetUsersID sets the "users" edge to the User entity by ID.
 func (auo *AccountUpdateOne) SetUsersID(id string) *AccountUpdateOne {
 	auo.mutation.SetUsersID(id)
+	return auo
+}
+
+// SetNillableUsersID sets the "users" edge to the User entity by ID if the given value is not nil.
+func (auo *AccountUpdateOne) SetNillableUsersID(id *string) *AccountUpdateOne {
+	if id != nil {
+		auo = auo.SetUsersID(*id)
+	}
 	return auo
 }
 
@@ -677,18 +707,12 @@ func (auo *AccountUpdateOne) Save(ctx context.Context) (*Account, error) {
 		node *Account
 	)
 	if len(auo.hooks) == 0 {
-		if err = auo.check(); err != nil {
-			return nil, err
-		}
 		node, err = auo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*AccountMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = auo.check(); err != nil {
-				return nil, err
 			}
 			auo.mutation = mutation
 			node, err = auo.sqlSave(ctx)
@@ -728,14 +752,6 @@ func (auo *AccountUpdateOne) ExecX(ctx context.Context) {
 	if err := auo.Exec(ctx); err != nil {
 		panic(err)
 	}
-}
-
-// check runs all checks and user-defined validators on the builder.
-func (auo *AccountUpdateOne) check() error {
-	if _, ok := auo.mutation.UsersID(); auo.mutation.UsersCleared() && !ok {
-		return errors.New(`ent: clearing a required unique edge "Account.users"`)
-	}
-	return nil
 }
 
 func (auo *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err error) {

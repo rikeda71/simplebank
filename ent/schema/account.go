@@ -23,7 +23,7 @@ func (Account) Fields() []ent.Field {
 
 		// .Optional() を設定するとnullableなカラムになる
 		// 今回は全てのカラムが NOT NULL 制約が付与されるため、デフォルトのままで良い
-		field.String("owner"),
+		field.String("owner").Optional(),
 		field.Int("balance"),
 		field.String("currency"),
 
@@ -43,14 +43,13 @@ func (Account) Edges() []ent.Edge {
 		edge.From("users", User.Type).
 			Ref("accounts").
 			Field("owner").
-			Unique().
-			Required(),
+			Unique(),
 	}
 }
 
 func (Account) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("owner").Unique(),
+		index.Fields("owner"),
 		index.Fields("owner", "currency").Unique(),
 	}
 }

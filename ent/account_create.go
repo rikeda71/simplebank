@@ -29,6 +29,14 @@ func (ac *AccountCreate) SetOwner(s string) *AccountCreate {
 	return ac
 }
 
+// SetNillableOwner sets the "owner" field if the given value is not nil.
+func (ac *AccountCreate) SetNillableOwner(s *string) *AccountCreate {
+	if s != nil {
+		ac.SetOwner(*s)
+	}
+	return ac
+}
+
 // SetBalance sets the "balance" field.
 func (ac *AccountCreate) SetBalance(i int) *AccountCreate {
 	ac.mutation.SetBalance(i)
@@ -103,6 +111,14 @@ func (ac *AccountCreate) AddToTransfers(t ...*Transfer) *AccountCreate {
 // SetUsersID sets the "users" edge to the User entity by ID.
 func (ac *AccountCreate) SetUsersID(id string) *AccountCreate {
 	ac.mutation.SetUsersID(id)
+	return ac
+}
+
+// SetNillableUsersID sets the "users" edge to the User entity by ID if the given value is not nil.
+func (ac *AccountCreate) SetNillableUsersID(id *string) *AccountCreate {
+	if id != nil {
+		ac = ac.SetUsersID(*id)
+	}
 	return ac
 }
 
@@ -190,9 +206,6 @@ func (ac *AccountCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (ac *AccountCreate) check() error {
-	if _, ok := ac.mutation.Owner(); !ok {
-		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required field "Account.owner"`)}
-	}
 	if _, ok := ac.mutation.Balance(); !ok {
 		return &ValidationError{Name: "balance", err: errors.New(`ent: missing required field "Account.balance"`)}
 	}
@@ -201,9 +214,6 @@ func (ac *AccountCreate) check() error {
 	}
 	if _, ok := ac.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Account.created_at"`)}
-	}
-	if _, ok := ac.mutation.UsersID(); !ok {
-		return &ValidationError{Name: "users", err: errors.New(`ent: missing required edge "Account.users"`)}
 	}
 	return nil
 }

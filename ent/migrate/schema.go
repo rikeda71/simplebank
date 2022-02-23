@@ -32,7 +32,7 @@ var (
 		Indexes: []*schema.Index{
 			{
 				Name:    "account_owner",
-				Unique:  true,
+				Unique:  false,
 				Columns: []*schema.Column{AccountsColumns[4]},
 			},
 			{
