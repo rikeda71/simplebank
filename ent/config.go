@@ -27,6 +27,7 @@ type hooks struct {
 	Account  []ent.Hook
 	Entry    []ent.Hook
 	Transfer []ent.Hook
+	User     []ent.Hook
 }
 
 // Options applies the options on the config object.

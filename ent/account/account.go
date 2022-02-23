@@ -25,6 +25,10 @@ const (
 	EdgeFromTransfers = "from_transfers"
 	// EdgeToTransfers holds the string denoting the to_transfers edge name in mutations.
 	EdgeToTransfers = "to_transfers"
+	// EdgeUsers holds the string denoting the users edge name in mutations.
+	EdgeUsers = "users"
+	// UserFieldID holds the string denoting the ID field of the User.
+	UserFieldID = "username"
 	// Table holds the table name of the account in the database.
 	Table = "accounts"
 	// EntriesTable is the table that holds the entries relation/edge.
@@ -48,6 +52,13 @@ const (
 	ToTransfersInverseTable = "transfers"
 	// ToTransfersColumn is the table column denoting the to_transfers relation/edge.
 	ToTransfersColumn = "to_account_id"
+	// UsersTable is the table that holds the users relation/edge.
+	UsersTable = "accounts"
+	// UsersInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	UsersInverseTable = "users"
+	// UsersColumn is the table column denoting the users relation/edge.
+	UsersColumn = "owner"
 )
 
 // Columns holds all SQL columns for account fields.

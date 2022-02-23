@@ -18,6 +18,8 @@ type Tx struct {
 	Entry *EntryClient
 	// Transfer is the client for interacting with the Transfer builders.
 	Transfer *TransferClient
+	// User is the client for interacting with the User builders.
+	User *UserClient
 
 	// lazily loaded.
 	client     *Client
@@ -156,6 +158,7 @@ func (tx *Tx) init() {
 	tx.Account = NewAccountClient(tx.config)
 	tx.Entry = NewEntryClient(tx.config)
 	tx.Transfer = NewTransferClient(tx.config)
+	tx.User = NewUserClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

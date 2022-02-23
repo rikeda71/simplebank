@@ -11,6 +11,7 @@ import (
 	"github.com/s14t284/simplebank/ent/account"
 	"github.com/s14t284/simplebank/ent/entry"
 	"github.com/s14t284/simplebank/ent/transfer"
+	"github.com/s14t284/simplebank/ent/user"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -34,6 +35,7 @@ func columnChecker(table string) func(string) error {
 		account.Table:  account.ValidColumn,
 		entry.Table:    entry.ValidColumn,
 		transfer.Table: transfer.ValidColumn,
+		user.Table:     user.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

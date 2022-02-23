@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/s14t284/simplebank/ent/account"
+	"github.com/s14t284/simplebank/ent/user"
 )
 
 // Account is the model entity for the Account schema.
@@ -37,9 +38,11 @@ type AccountEdges struct {
 	FromTransfers []*Transfer `json:"from_transfers,omitempty"`
 	// ToTransfers holds the value of the to_transfers edge.
 	ToTransfers []*Transfer `json:"to_transfers,omitempty"`
+	// Users holds the value of the users edge.
+	Users *User `json:"users,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // EntriesOrErr returns the Entries value or an error if the edge
@@ -67,6 +70,20 @@ func (e AccountEdges) ToTransfersOrErr() ([]*Transfer, error) {
 		return e.ToTransfers, nil
 	}
 	return nil, &NotLoadedError{edge: "to_transfers"}
+}
+
+// UsersOrErr returns the Users value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e AccountEdges) UsersOrErr() (*User, error) {
+	if e.loadedTypes[3] {
+		if e.Users == nil {
+			// The edge users was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: user.Label}
+		}
+		return e.Users, nil
+	}
+	return nil, &NotLoadedError{edge: "users"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -143,6 +160,11 @@ func (a *Account) QueryFromTransfers() *TransferQuery {
 // QueryToTransfers queries the "to_transfers" edge of the Account entity.
 func (a *Account) QueryToTransfers() *TransferQuery {
 	return (&AccountClient{config: a.config}).QueryToTransfers(a)
+}
+
+// QueryUsers queries the "users" edge of the Account entity.
+func (a *Account) QueryUsers() *UserQuery {
+	return (&AccountClient{config: a.config}).QueryUsers(a)
 }
 
 // Update returns a builder for updating this Account.

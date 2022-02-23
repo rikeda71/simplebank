@@ -14,6 +14,7 @@ import (
 	"github.com/s14t284/simplebank/ent/entry"
 	"github.com/s14t284/simplebank/ent/predicate"
 	"github.com/s14t284/simplebank/ent/transfer"
+	"github.com/s14t284/simplebank/ent/user"
 )
 
 // AccountUpdate is the builder for updating Account entities.
@@ -99,6 +100,17 @@ func (au *AccountUpdate) AddToTransfers(t ...*Transfer) *AccountUpdate {
 	return au.AddToTransferIDs(ids...)
 }
 
+// SetUsersID sets the "users" edge to the User entity by ID.
+func (au *AccountUpdate) SetUsersID(id string) *AccountUpdate {
+	au.mutation.SetUsersID(id)
+	return au
+}
+
+// SetUsers sets the "users" edge to the User entity.
+func (au *AccountUpdate) SetUsers(u *User) *AccountUpdate {
+	return au.SetUsersID(u.ID)
+}
+
 // Mutation returns the AccountMutation object of the builder.
 func (au *AccountUpdate) Mutation() *AccountMutation {
 	return au.mutation
@@ -167,6 +179,12 @@ func (au *AccountUpdate) RemoveToTransfers(t ...*Transfer) *AccountUpdate {
 	return au.RemoveToTransferIDs(ids...)
 }
 
+// ClearUsers clears the "users" edge to the User entity.
+func (au *AccountUpdate) ClearUsers() *AccountUpdate {
+	au.mutation.ClearUsers()
+	return au
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (au *AccountUpdate) Save(ctx context.Context) (int, error) {
 	var (
@@ -174,12 +192,18 @@ func (au *AccountUpdate) Save(ctx context.Context) (int, error) {
 		affected int
 	)
 	if len(au.hooks) == 0 {
+		if err = au.check(); err != nil {
+			return 0, err
+		}
 		affected, err = au.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*AccountMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = au.check(); err != nil {
+				return 0, err
 			}
 			au.mutation = mutation
 			affected, err = au.sqlSave(ctx)
@@ -221,6 +245,14 @@ func (au *AccountUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (au *AccountUpdate) check() error {
+	if _, ok := au.mutation.UsersID(); au.mutation.UsersCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Account.users"`)
+	}
+	return nil
+}
+
 func (au *AccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -238,13 +270,6 @@ func (au *AccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := au.mutation.Owner(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: account.FieldOwner,
-		})
 	}
 	if value, ok := au.mutation.Balance(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
@@ -429,6 +454,41 @@ func (au *AccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if au.mutation.UsersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   account.UsersTable,
+			Columns: []string{account.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.UsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   account.UsersTable,
+			Columns: []string{account.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, au.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{account.Label}
@@ -518,6 +578,17 @@ func (auo *AccountUpdateOne) AddToTransfers(t ...*Transfer) *AccountUpdateOne {
 	return auo.AddToTransferIDs(ids...)
 }
 
+// SetUsersID sets the "users" edge to the User entity by ID.
+func (auo *AccountUpdateOne) SetUsersID(id string) *AccountUpdateOne {
+	auo.mutation.SetUsersID(id)
+	return auo
+}
+
+// SetUsers sets the "users" edge to the User entity.
+func (auo *AccountUpdateOne) SetUsers(u *User) *AccountUpdateOne {
+	return auo.SetUsersID(u.ID)
+}
+
 // Mutation returns the AccountMutation object of the builder.
 func (auo *AccountUpdateOne) Mutation() *AccountMutation {
 	return auo.mutation
@@ -586,6 +657,12 @@ func (auo *AccountUpdateOne) RemoveToTransfers(t ...*Transfer) *AccountUpdateOne
 	return auo.RemoveToTransferIDs(ids...)
 }
 
+// ClearUsers clears the "users" edge to the User entity.
+func (auo *AccountUpdateOne) ClearUsers() *AccountUpdateOne {
+	auo.mutation.ClearUsers()
+	return auo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (auo *AccountUpdateOne) Select(field string, fields ...string) *AccountUpdateOne {
@@ -600,12 +677,18 @@ func (auo *AccountUpdateOne) Save(ctx context.Context) (*Account, error) {
 		node *Account
 	)
 	if len(auo.hooks) == 0 {
+		if err = auo.check(); err != nil {
+			return nil, err
+		}
 		node, err = auo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*AccountMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = auo.check(); err != nil {
+				return nil, err
 			}
 			auo.mutation = mutation
 			node, err = auo.sqlSave(ctx)
@@ -647,6 +730,14 @@ func (auo *AccountUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (auo *AccountUpdateOne) check() error {
+	if _, ok := auo.mutation.UsersID(); auo.mutation.UsersCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Account.users"`)
+	}
+	return nil
+}
+
 func (auo *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -681,13 +772,6 @@ func (auo *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err e
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := auo.mutation.Owner(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: account.FieldOwner,
-		})
 	}
 	if value, ok := auo.mutation.Balance(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
@@ -864,6 +948,41 @@ func (auo *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err e
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: transfer.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if auo.mutation.UsersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   account.UsersTable,
+			Columns: []string{account.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.UsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   account.UsersTable,
+			Columns: []string{account.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeString,
+					Column: user.FieldID,
 				},
 			},
 		}

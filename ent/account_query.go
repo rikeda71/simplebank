@@ -17,6 +17,7 @@ import (
 	"github.com/s14t284/simplebank/ent/entry"
 	"github.com/s14t284/simplebank/ent/predicate"
 	"github.com/s14t284/simplebank/ent/transfer"
+	"github.com/s14t284/simplebank/ent/user"
 )
 
 // AccountQuery is the builder for querying Account entities.
@@ -32,6 +33,7 @@ type AccountQuery struct {
 	withEntries       *EntryQuery
 	withFromTransfers *TransferQuery
 	withToTransfers   *TransferQuery
+	withUsers         *UserQuery
 	modifiers         []func(s *sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -128,6 +130,28 @@ func (aq *AccountQuery) QueryToTransfers() *TransferQuery {
 			sqlgraph.From(account.Table, account.FieldID, selector),
 			sqlgraph.To(transfer.Table, transfer.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, account.ToTransfersTable, account.ToTransfersColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryUsers chains the current query on the "users" edge.
+func (aq *AccountQuery) QueryUsers() *UserQuery {
+	query := &UserQuery{config: aq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := aq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := aq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(account.Table, account.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, account.UsersTable, account.UsersColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
 		return fromU, nil
@@ -319,6 +343,7 @@ func (aq *AccountQuery) Clone() *AccountQuery {
 		withEntries:       aq.withEntries.Clone(),
 		withFromTransfers: aq.withFromTransfers.Clone(),
 		withToTransfers:   aq.withToTransfers.Clone(),
+		withUsers:         aq.withUsers.Clone(),
 		// clone intermediate query.
 		sql:  aq.sql.Clone(),
 		path: aq.path,
@@ -355,6 +380,17 @@ func (aq *AccountQuery) WithToTransfers(opts ...func(*TransferQuery)) *AccountQu
 		opt(query)
 	}
 	aq.withToTransfers = query
+	return aq
+}
+
+// WithUsers tells the query-builder to eager-load the nodes that are connected to
+// the "users" edge. The optional arguments are used to configure the query builder of the edge.
+func (aq *AccountQuery) WithUsers(opts ...func(*UserQuery)) *AccountQuery {
+	query := &UserQuery{config: aq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	aq.withUsers = query
 	return aq
 }
 
@@ -423,10 +459,11 @@ func (aq *AccountQuery) sqlAll(ctx context.Context) ([]*Account, error) {
 	var (
 		nodes       = []*Account{}
 		_spec       = aq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			aq.withEntries != nil,
 			aq.withFromTransfers != nil,
 			aq.withToTransfers != nil,
+			aq.withUsers != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
@@ -524,6 +561,32 @@ func (aq *AccountQuery) sqlAll(ctx context.Context) ([]*Account, error) {
 				return nil, fmt.Errorf(`unexpected foreign-key "to_account_id" returned %v for node %v`, fk, n.ID)
 			}
 			node.Edges.ToTransfers = append(node.Edges.ToTransfers, n)
+		}
+	}
+
+	if query := aq.withUsers; query != nil {
+		ids := make([]string, 0, len(nodes))
+		nodeids := make(map[string][]*Account)
+		for i := range nodes {
+			fk := nodes[i].Owner
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
+		}
+		query.Where(user.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "owner" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Users = n
+			}
 		}
 	}
 

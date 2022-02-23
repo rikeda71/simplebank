@@ -17,7 +17,6 @@ type Transfer struct {
 // Fields of the Transfer.
 func (Transfer) Fields() []ent.Field {
 	return []ent.Field{
-		// edges で定義しているので省略
 		field.Int("from_account_id"),
 		field.Int("to_account_id"),
 
